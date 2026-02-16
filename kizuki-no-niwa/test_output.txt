@@ -1,0 +1,42 @@
+[dotenv@17.3.1] injecting env (3) from .env -- tip: 笞呻ｸ・ suppress all logs with { quiet: true }
+ｧｪ Starting Local Test for Gemini 2.5 Flash Generation...
+泊 API Key found: AIza****
+
+統 User Prompt:
+迴ｾ蝨ｨ: 蝨溘ヵ繧ｧ繝ｼ繧ｺ (Phase 1), Day 1
+
+繝ｦ繝ｼ繧ｶ繝ｼ縺ｮ莉頑律縺ｮ豌励▼縺・
+"菫｡蜿ｷ蠕・■縺ｧ縲・搨轤ｹ貊・′螯吶↓髟ｷ縺・→諢溘§縺溘よ･縺仙ｿ・ｦ√・縺ｪ縺・・縺ｫ縲∝ｿ・∮縺縺代′諤･縺・〒縺・ｋ縲・
+
+逶ｴ霑代・豌励▼縺・
+縺ｪ縺・
+蜑榊屓縺ｮ縺ゅｉ縺吶§:
+・医％繧後′譛蛻昴・繧ｨ繝斐た繝ｼ繝峨〒縺呻ｼ・
+譛ｪ蝗槫庶縺ｮ莨冗ｷ・
+縺ｪ縺・
+謖・､ｺ:
+- 400縲・00譁・ｭ励・遏ｭ邱ｨ繧ｨ繝斐た繝ｼ繝峨ｒ譌･譛ｬ隱槭〒譖ｸ縺・※縺上□縺輔＞
+- 繝ｦ繝ｼ繧ｶ繝ｼ縺ｮ縲梧ｰ励▼縺阪阪ｒ螟ｩ豌励。GM縲∬レ譎ｯ縺ｮ蜃ｺ譚･莠九→縺励※髢捺磁逧・↓郢斐ｊ霎ｼ繧薙〒縺上□縺輔＞
+- 繝ｦ繝ｼ繧ｶ繝ｼ縺ｫ隱ｬ謨吶＠縺ｪ縺・〒縺上□縺輔＞
+- Phase 1縺ｮ繝ｫ繝ｼ繝ｫ縺ｫ蠕薙＞縲・←蛻・↑繧ｭ繝｣繝ｩ繧ｯ繧ｿ繝ｼ繧剃ｽｿ縺｣縺ｦ縺上□縺輔＞
+- 蠢・ｦ√↓蠢懊§縺ｦ譁ｰ縺励＞莨冗ｷ壹ｒ莉戊ｾｼ繧薙〒縺上□縺輔＞・磯ｻ蠎ｦ縺ｯ3縲・繧ｨ繝斐た繝ｼ繝峨↓1蝗樒ｨ句ｺｦ・・- 譛ｪ蝗槫庶縺ｮ莨冗ｷ壹′縺ゅｋ蝣ｴ蜷医∬・辟ｶ縺ｫ蝗槫庶縺ｧ縺阪ｋ繧ｿ繧､繝溘Φ繧ｰ縺ｪ繧牙屓蜿弱＠縺ｦ縺上□縺輔＞
+
+莉･荳九・JSON蠖｢蠑上・縺ｿ縺ｧ蜃ｺ蜉帙＠縺ｦ縺上□縺輔＞・井ｻ悶・繝・く繧ｹ繝医・荳崎ｦ・ｼ・
+{
+  "story_text": "迚ｩ隱樊悽譁・,
+  "summary_for_next": "谺｡蝗槭∈縺ｮ蠑輔″邯吶℃隕∫ｴ・ｼ・00譁・ｭ嶺ｻ･蜀・ｼ・,
+  "mood_tags": ["繧ｿ繧ｰ1", "繧ｿ繧ｰ2"],
+  "character": "haru" 縺ｾ縺溘・ "sora",
+  "new_foreshadowing": null 縺ｾ縺溘・ "莨冗ｷ壹Δ繝√・繝輔・譁・ｭ怜・",
+  "resolved_foreshadowing_id": null 縺ｾ縺溘・ "莨冗ｷ壹・uuid"
+}
+
+竢ｳ Calling Gemini API...
+
+笨ｨ Raw Response:
+ {
+笶・Test Failed: SyntaxError: Unterminated string in JSON at position 118 (line 2 column 117)
+    at JSON.parse (<anonymous>)
+    at runTest (C:\Users\jonso\.gemini\kotonoha-antigravity\kizuki-no-niwa\scripts\test-generate-story.ts:135:33)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+  "story_text": "縲碁Κ髟ｷ縲√♀蜑阪・荳菴謎ｽ輔ｒ閠・∴縺ｦ縺・ｋ繧薙□・溘構n菫ｺ縺ｯ繝槭げ繧ｫ繝・・繧貞だ縺代∫ｪ薙・螟悶ｒ縺ｼ繧薙ｄ繧翫→逵ｺ繧√◆縲ょｹｳ譌･縺ｮ蜊亥燕荳ｭ縲ゅす繧ｹ繝・Β髫懷ｮｳ縺ｮ蟇ｾ蠢懊ｂ荳谿ｵ關ｽ縺励∽ｻ頑律縺ｯ荵・・↓遨上ｄ縺九↑荳譌･縺ｫ縺ｪ繧九・縺壹□縺｣縺溘ゅ＠縺九＠縲√←縺・↓繧ゅ∝ｿ・

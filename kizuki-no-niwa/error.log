@@ -1,0 +1,4 @@
+❌ Test Failed: SyntaxError: Unterminated string in JSON at position 117 (line 2 column 116)
+    at JSON.parse (<anonymous>)
+    at runTest (C:\Users\jonso\.gemini\kotonoha-antigravity\kizuki-no-niwa\scripts\test-generate-story.ts:135:33)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
