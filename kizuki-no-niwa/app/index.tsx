@@ -6,6 +6,7 @@ import { IsakaButton } from '../components/IsakaButton';
 import { useStore } from '../stores/useStore';
 import { COLORS } from '../constants/theme';
 import { useEffect, useState, useCallback } from 'react';
+import { LocalStoryStore } from '../lib/localStoryStore';
 import { supabase } from '../lib/supabase';
 import { Database } from '../types/supabase';
 import { ForeshadowingList } from '../components/ForeshadowingList';
@@ -21,18 +22,28 @@ export default function HomeScreen() {
     const [randomFragment, setRandomFragment] = useState<Story | null>(null);
 
     const fetchStories = useCallback(async () => {
-        const { data } = await supabase
+        // 1. Fetch Remote
+        const { data: remoteData } = await supabase
             .from('stories')
             .select('*')
             .order('created_at', { ascending: false })
             .limit(5);
 
-        if (data) {
-            setRecentStories(data);
-            if (data.length > 0) {
-                const randomIdx = Math.floor(Math.random() * data.length);
-                setRandomFragment(data[randomIdx]);
-            }
+        // 2. Fetch Local
+        const localData = await LocalStoryStore.getStories();
+
+        // 3. Merge & Dedupe
+        const combined = [...(remoteData || []), ...localData];
+        const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
+
+        // 4. Sort
+        unique.sort((a, b) => new Date(b.created_at!).getTime() - new Date(a.created_at!).getTime());
+
+        setRecentStories(unique.slice(0, 10)); // Show top 10
+
+        if (unique.length > 0) {
+            const randomIdx = Math.floor(Math.random() * unique.length);
+            setRandomFragment(unique[randomIdx]);
         }
     }, []);
 
@@ -93,27 +104,34 @@ export default function HomeScreen() {
 
             <View className="flex-1 justify-center items-center py-8">
                 <IsakaButton
-                    title="Write Kizuki"
+                    title="気づきを綴る"
                     onPress={() => router.push('/write')}
-                    className="w-full max-w-xs"
+                    className="w-full max-w-xs mb-4"
                 />
-                <View className="h-4" />
+
                 <IsakaButton
-                    title="Talk to Haru"
+                    title="これまでの記憶"
+                    variant="secondary"
+                    onPress={() => router.push('/kizuki')}
+                    className="w-full max-w-xs mb-8 border-stone/30"
+                />
+
+                <IsakaButton
+                    title="ハルと話す"
                     variant="secondary"
                     onPress={() => router.push({ pathname: '/dialogue/[id]', params: { id: 'haru' } })}
                     className="w-full max-w-xs"
                 />
 
                 {/* Jinnai: "Locks are just decorations." Unlocked for user. */}
-                {(profile?.current_phase || 2) >= 2 && (
+                {(profile?.current_phase || 1) >= 2 && (
                     <>
                         <View className="h-4" />
                         <IsakaButton
-                            title="Talk to Sora"
+                            title="ソラと話す"
                             variant="secondary"
                             onPress={() => router.push({ pathname: '/dialogue/[id]', params: { id: 'sora' } })}
-                            className="w-full max-w-xs border-indigo-300 bg-indigo-50"
+                            className="w-full max-w-xs border-indigo-200 bg-indigo-50/30"
                         />
                     </>
                 )}
@@ -123,7 +141,7 @@ export default function HomeScreen() {
 
             <View className="flex-1 mt-8">
                 <Text className="text-sumi font-serif text-lg mb-4 border-b border-stone/30 pb-2">
-                    Your Stories
+                    紡がれた物語
                 </Text>
                 <FlatList
                     data={recentStories}
@@ -140,7 +158,7 @@ export default function HomeScreen() {
                         </View>
                     )}
                     ListEmptyComponent={
-                        <Text className="text-stone text-center mt-4 italic">No stories yet. Plant a seed.</Text>
+                        <Text className="text-stone text-center mt-4 italic">まだ物語がありません。種をまきましょう。</Text>
                     }
                 />
             </View>

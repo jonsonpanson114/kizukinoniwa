@@ -7,6 +7,7 @@ import { IsakaButton } from '../../components/IsakaButton';
 import { supabase } from '../../lib/supabase';
 import { Database } from '../../types/supabase';
 import { COLORS } from '../../constants/theme';
+import { LocalStoryStore } from '../../lib/localStoryStore';
 
 type Story = Database['public']['Tables']['stories']['Row'];
 
@@ -37,20 +38,29 @@ export default function StoryScreen() {
     }, [id, content]);
 
     const fetchStory = async () => {
-        // Mock handling for legacy/direct IDs
-        if (typeof id === 'string' && id.startsWith('mock-')) {
-            // ... (keep existing mock logic if needed, or rely on params)
-            // For safety, keeping basic mock logic but usually params covers it
-        }
-
         const storyId = Array.isArray(id) ? id[0] : id;
+
+        // 1. Try Supabase
         const { data } = await supabase
             .from('stories')
             .select('*')
             .eq('id', storyId)
             .single();
 
-        if (data) setStory(data);
+        if (data) {
+            setStory(data);
+            setLoading(false);
+            return;
+        }
+
+        // 2. Try Local Store (Fallback)
+        const localStories = await LocalStoryStore.getStories();
+        const localStory = localStories.find((s: Story) => s.id === storyId);
+
+        if (localStory) {
+            setStory(localStory);
+        }
+
         setLoading(false);
     };
 

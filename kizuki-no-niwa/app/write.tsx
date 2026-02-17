@@ -11,6 +11,8 @@ import { getRandomPrompt, getNextPhase } from '../constants/prompts';
 import { generateStory } from '../lib/gemini';
 import { Database } from '../types/supabase';
 import { ForeshadowingService } from '../lib/services/foreshadowing';
+import { LocalStoryStore } from '../lib/localStoryStore';
+import { LocalKizukiStore } from '../lib/localKizukiStore';
 
 type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
 type KizukiInsert = Database['public']['Tables']['kizuki']['Insert'];
@@ -51,6 +53,11 @@ export default function WriteScreen() {
         if (!user) {
             console.log('Using Mock User for Offline Verification');
             user = { id: 'mock-user-id', email: 'mock@example.com' } as any;
+
+            // Allow saving kizuki even for mock user (local only)
+            // The previous logic skipped block 1 if user was null initially, 
+            // but now we force user, so block 1 will run. 
+            // We just need to ensure the local fallback inside block 1 triggers.
         }
 
         try {
@@ -91,6 +98,13 @@ export default function WriteScreen() {
                     }
                 } catch (e) {
                     console.log('Failed to save Kizuki/Profile (Offline mode):', e);
+                    // Fallback: Save Kizuki Locally
+                    await LocalKizukiStore.saveKizuki({
+                        user_id: user.id,
+                        content: content,
+                        question_prompt: dailyPrompt,
+                        created_at: new Date().toISOString()
+                    });
                 }
             }
 
@@ -120,11 +134,15 @@ export default function WriteScreen() {
             } catch (e) {
                 console.error("AI Generation failed:", e);
                 // Fallback
+                const errorMessage = (e as Error).message || 'Unknown Error';
+                console.error("AI Generation failed:", errorMessage);
+
+                // GENERATE MOCK BUT SHOW ERROR FOR DEBUGGING
                 generatedStory = {
-                    story_text: "（AIの調子が悪いようです...。しかし、あなたの言葉は確かに記録されました。）",
+                    story_text: `（※エラー発生: ${errorMessage}）\n\n（以下はモック生成です）\n\n「${content}」\n\nその言葉が、ふと風に乗って聞こえた気がした。Phase ${profile?.current_phase ?? 1}の空は高く、Day ${profile?.current_day ?? 1}の光が差している。\n\nハルは珈琲を飲みながら、「また変なのが聞こえたな」と呟く。\n\n世界は相変わらず、少しだけズレているようだ。`,
                     summary_for_next: "生成失敗",
-                    mood_tags: ["Error"],
-                    motifs: ["雨の音"], // Mock motif for testing
+                    mood_tags: ["Error: " + errorMessage.substring(0, 10)],
+                    motifs: ["雨の音"],
                     character: "haru",
                     new_foreshadowing: null,
                     resolved_foreshadowing_id: null
@@ -149,13 +167,30 @@ export default function WriteScreen() {
                         .select()
                         .single();
 
-                    if (storyData) storyId = storyData.id;
+                    if (storyData) {
+                        storyId = storyData.id;
+                    }
                 } catch (e) {
                     console.warn("Failed to save story DB", e);
                 }
             }
 
-            if (!storyId) storyId = mockStoryId;
+            // FALLBACK / MOCK PERSISTENCE
+            if (!storyId) {
+                storyId = mockStoryId;
+                // Save locally for offline/mock mode
+                await LocalStoryStore.saveStory({
+                    id: storyId,
+                    user_id: user.id,
+                    content: generatedStory.story_text,
+                    summary: generatedStory.summary_for_next,
+                    mood_tags: generatedStory.mood_tags,
+                    character: generatedStory.character,
+                    phase: profile?.current_phase ?? 1,
+                    day: profile?.current_day ?? 1,
+                    created_at: new Date().toISOString()
+                });
+            }
 
             // 4. Plant Seeds (Foreshadowing)
             if (user && generatedStory.motifs && generatedStory.motifs.length > 0) {

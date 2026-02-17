@@ -7,10 +7,6 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider } from '../components/AuthProvider';
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
-
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
@@ -26,6 +22,8 @@ export default function RootLayout() {
           <Stack.Screen name="index" />
           <Stack.Screen name="write" />
           <Stack.Screen name="story/[id]" />
+          <Stack.Screen name="kizuki/index" />
+          <Stack.Screen name="dialogue/[id]" />
         </Stack>
         <StatusBar style="auto" />
       </AuthProvider>
