@@ -4,6 +4,13 @@ import { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { useStore } from '../stores/useStore';
 import { COLORS } from '../constants/theme';
+import { Config } from '../lib/config';
+
+const isSupabaseConfigured = Boolean(
+    Config.SUPABASE_URL &&
+    Config.SUPABASE_ANON_KEY &&
+    !Config.SUPABASE_URL.includes('your_')
+);
 
 async function fetchOrCreateProfile(userId: string) {
     // Try to fetch existing profile
@@ -51,13 +58,19 @@ async function handleSession(session: Session | null) {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [isReady, setIsReady] = useState(false);
+    const [isReady, setIsReady] = useState(!isSupabaseConfigured);
 
     useEffect(() => {
+        if (!isSupabaseConfigured) {
+            console.warn('[AuthProvider] Supabase not configured — running in offline mode');
+            return;
+        }
+
         // Check for existing session
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            handleSession(session).then(() => setIsReady(true));
-        });
+        supabase.auth.getSession()
+            .then(({ data: { session } }) => handleSession(session))
+            .catch((err) => console.error('Auth session error:', err))
+            .finally(() => setIsReady(true));
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -68,6 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     useEffect(() => {
+        if (!isSupabaseConfigured) return;
         if (isReady && !useStore.getState().session) {
             // Auto sign-in anonymously if no session
             supabase.auth.signInAnonymously().then(({ error }) => {
