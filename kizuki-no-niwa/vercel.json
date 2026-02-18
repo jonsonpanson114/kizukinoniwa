@@ -1,6 +1,7 @@
 {
     "version": 2,
     "name": "kizuki-no-niwa",
+    "outputDirectory": "dist",
     "rewrites": [
         {
             "source": "/(.*)",
