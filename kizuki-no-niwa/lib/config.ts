@@ -13,24 +13,21 @@ interface AppConfig {
     IS_PROD: boolean;
 }
 
-const getEnv = (key: string, required = true): string => {
-    // Priority: process.env (Vercel) > expo-constants (Local)
-    const value = process.env[key] || Constants.expoConfig?.extra?.[key];
-
-    if (required && !value) {
+const getEnv = (key: string, value: string | undefined): string => {
+    if (!value) {
         const error = `[SECURITY ERROR] Required environment variable "${key}" is missing. Check your .env file or Vercel settings.`;
         console.error(error);
-        // We don't throw here to avoid crashing during build/preview, 
-        // but return empty to trigger API fallbacks with logs.
         return '';
     }
-    return value || '';
+    return value;
 };
 
+// EXPO_PUBLIC_ variables must be accessed statically for inlining to work.
+// Do not use process.env[key] for these.
 export const Config: AppConfig = {
-    GEMINI_API_KEY: getEnv('EXPO_PUBLIC_GEMINI_API_KEY'),
-    SUPABASE_URL: getEnv('EXPO_PUBLIC_SUPABASE_URL'),
-    SUPABASE_ANON_KEY: getEnv('EXPO_PUBLIC_SUPABASE_ANON_KEY'),
+    GEMINI_API_KEY: getEnv('EXPO_PUBLIC_GEMINI_API_KEY', process.env.EXPO_PUBLIC_GEMINI_API_KEY),
+    SUPABASE_URL: getEnv('EXPO_PUBLIC_SUPABASE_URL', process.env.EXPO_PUBLIC_SUPABASE_URL),
+    SUPABASE_ANON_KEY: getEnv('EXPO_PUBLIC_SUPABASE_ANON_KEY', process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY),
     IS_PROD: process.env.NODE_ENV === 'production',
 };
 
