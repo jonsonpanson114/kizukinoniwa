@@ -10,6 +10,7 @@ import { LocalStoryStore } from '../lib/localStoryStore';
 import { supabase } from '../lib/supabase';
 import { Database } from '../types/supabase';
 import { ForeshadowingList } from '../components/ForeshadowingList';
+import { PWAGuide } from '../components/PWAGuide';
 
 type Story = Database['public']['Tables']['stories']['Row'];
 
@@ -162,6 +163,8 @@ export default function HomeScreen() {
                     }
                 />
             </View>
+            {/* ... existing code ... */}
+            <PWAGuide />
         </WashiBackground>
     );
 }
