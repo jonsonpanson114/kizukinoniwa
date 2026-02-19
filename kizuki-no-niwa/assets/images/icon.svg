@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <radialGradient id="paperGlow" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#EDE8DC"/>
+      <stop offset="100%" stop-color="#F5F5F0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- 和紙の背景 -->
+  <rect width="1024" height="1024" fill="url(#paperGlow)"/>
+
+  <!-- 土の線 (ground line) - 筆のような曲線 -->
+  <path d="M 290 718 C 370 706 450 710 512 712 C 574 710 654 706 734 718"
+        stroke="#2D2D2D" stroke-width="13" fill="none"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- 茎 (stem) - 中央から伸びる -->
+  <path d="M 512 712 C 511 678 510 638 511 590 C 512 558 513 522 512 458"
+        stroke="#2D2D2D" stroke-width="17" fill="none"
+        stroke-linecap="round"/>
+
+  <!-- 左の葉 (left leaf) - 下側、やや大きい -->
+  <path d="M 511 600 C 478 572 432 550 400 562
+           C 383 578 396 603 511 610 Z"
+        fill="#2D2D2D"/>
+  <!-- 左葉の葉脈 -->
+  <path d="M 511 605 C 475 588 442 572 406 565"
+        stroke="#F5F5F0" stroke-width="2.2" fill="none"
+        stroke-linecap="round" opacity="0.45"/>
+
+  <!-- 右の葉 (right leaf) - 上側、やや小さい -->
+  <path d="M 512 528 C 548 496 592 478 622 490
+           C 636 508 622 530 512 536 Z"
+        fill="#2D2D2D"/>
+  <!-- 右葉の葉脈 -->
+  <path d="M 512 532 C 546 516 580 499 618 493"
+        stroke="#F5F5F0" stroke-width="2.2" fill="none"
+        stroke-linecap="round" opacity="0.45"/>
+
+  <!-- 芽の先端 (bud) -->
+  <ellipse cx="512" cy="445" rx="9" ry="15"
+           fill="#2D2D2D" transform="rotate(-3 512 445)"/>
+
+  <!-- 土の粒 (soil dots) -->
+  <circle cx="410" cy="732" r="6"  fill="#8E8E93" opacity="0.65"/>
+  <circle cx="458" cy="736" r="4.5" fill="#8E8E93" opacity="0.55"/>
+  <circle cx="512" cy="737" r="5"  fill="#8E8E93" opacity="0.65"/>
+  <circle cx="558" cy="736" r="4.5" fill="#8E8E93" opacity="0.55"/>
+  <circle cx="606" cy="732" r="6"  fill="#8E8E93" opacity="0.65"/>
+</svg>
