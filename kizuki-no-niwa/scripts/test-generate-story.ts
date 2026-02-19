@@ -93,7 +93,8 @@ ${foreshadowingText}
 
 async function runTest() {
     console.log("🧪 Starting Local Test for Gemini 2.5 Flash Generation...");
-    console.log("🔑 API Key found: " + GEMINI_API_KEY.slice(0, 4) + "****");
+    console.log("🧪 Starting Local Test for Gemini 2.5 Flash Generation...");
+    // console.log("🔑 API Key found: " + (GEMINI_API_KEY ? "Present" : "Missing")); // Do not log the key itself
 
     const mockPhase = 1;
     const mockDay = 1;
@@ -152,8 +153,13 @@ async function runTest() {
                 console.error("Cleaned text was:", cleanText);
             }
         }
-    } catch (error) {
-        console.error("❌ Test Failed:", error);
+    } catch (error: any) {
+        // Sanitize error message to remove API key from URL if present
+        let errorMessage = error.message || String(error);
+        if (errorMessage.includes('key=')) {
+            errorMessage = errorMessage.replace(/key=[^&]+/, 'key=REDACTED');
+        }
+        console.error("❌ Test Failed:", errorMessage);
     }
 }
 

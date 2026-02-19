@@ -49,3 +49,7 @@ app-example
 # Secret/key files — never commit these
 clean_key.txt
 env_input.txt
+
+# detailed logs
+*.log
+test_output.txt
