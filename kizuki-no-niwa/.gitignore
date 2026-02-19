@@ -32,7 +32,8 @@ yarn-error.*
 
 # local env files
 .env
-.env*.local
+.env*
+!.env.example
 
 # typescript
 *.tsbuildinfo
@@ -45,5 +46,6 @@ app-example
 
 .vercel
 
-.vercel
-.env*.local
+# Secret/key files — never commit these
+clean_key.txt
+env_input.txt
