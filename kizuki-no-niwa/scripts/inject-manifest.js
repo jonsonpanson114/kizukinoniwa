@@ -8,7 +8,8 @@ if (fs.existsSync(indexPath)) {
 
     if (!html.includes('manifest.json')) {
         const manifestLink = '<link rel="manifest" href="/manifest.json" />';
-        html = html.replace('</head>', `${manifestLink}</head>`);
+        const appleIconLink = '<link rel="apple-touch-icon" href="/icons/icon-512.png" />';
+        html = html.replace('</head>', `${manifestLink}${appleIconLink}</head>`);
         fs.writeFileSync(indexPath, html);
         console.log('Injected manifest link into dist/index.html');
     } else {
