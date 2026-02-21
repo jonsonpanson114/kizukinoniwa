@@ -1,4 +1,3 @@
-import { Database } from '../types/supabase';
 import { Config } from './config';
 
 const GEMINI_API_KEY = Config.GEMINI_API_KEY;
@@ -134,8 +133,9 @@ export async function generateStory(
         return JSON.parse(cleanText);
 
     } catch (error) {
-        console.warn('Gemini API failed, falling back to mock generation:', error);
-        return mockGenerateStory(phase, day, kizukiContent, pendingMotifs);
+        const errMsg = error instanceof Error ? error.message : String(error);
+        console.error('Gemini API failed:', errMsg);
+        throw new Error(`Gemini API failed: ${errMsg}`);
     }
 }
 
