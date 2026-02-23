@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(git rm:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfix: add missing react-error-boundary dep and clean up for Vercel deploy\n\n- Add react-error-boundary to package.json \\(was imported but never installed\\)\n- Remove .env and test_key.js from tracking \\(contain API keys\\)\n- Add ErrorBoundary, PWAGuide, Config module, and other pending changes\n- Update package-lock.json\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "WebFetch(domain:kizuki-no-niwa.vercel.app)",
+      "Bash(npx vercel:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfix: prevent AuthProvider from hanging when Supabase is not configured\n\nSkip auth initialization when Supabase URL/key are missing or placeholder\nvalues, allowing the app to render in offline mode instead of hanging.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit:*)",
+      "Bash(git -C \"c:/Users/jonso/.gemini/kotonoha-antigravity\" log --all --oneline)",
+      "Bash(git -C \"C:\\\\Users\\\\jonso\\\\.gemini\\\\kotonoha-antigravity\" log --all --oneline)",
+      "Bash(bash -c:*)",
+      "Bash(git -C \"C:/Users/jonso/.gemini/kotonoha-antigravity\" status)",
+      "Bash(cmd /c:*)"
+    ]
+  }
+}

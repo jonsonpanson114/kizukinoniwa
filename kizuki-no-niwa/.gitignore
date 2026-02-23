@@ -47,8 +47,9 @@ app-example
 .vercel
 
 # Secret/key files — never commit these
-clean_key.txt
+clean_key*.txt
 env_input.txt
+validation_output.txt
 
 # detailed logs
 *.log
