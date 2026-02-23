@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useStore } from '../stores/useStore';
 import { COLORS } from '../constants/theme';
 import { Config } from '../lib/config';
+import { LocalProfileStore } from '../lib/localProfileStore';
 
 const isSupabaseConfigured = Boolean(
     Config.SUPABASE_URL &&
@@ -49,11 +50,19 @@ async function handleSession(session: Session | null) {
     const { setSession, setProfile } = useStore.getState();
     setSession(session);
 
+    const localProfile = await LocalProfileStore.getProfile();
+
     if (session?.user) {
-        const profile = await fetchOrCreateProfile(session.user.id);
-        setProfile(profile);
+        const remoteProfile = await fetchOrCreateProfile(session.user.id);
+        // Use whichever profile is more advanced (local wins if ahead)
+        if (remoteProfile && localProfile.current_day > (remoteProfile.current_day ?? 1)) {
+            setProfile({ ...remoteProfile, ...localProfile, id: remoteProfile.id });
+        } else {
+            setProfile(remoteProfile);
+        }
     } else {
-        setProfile(null);
+        // No auth session — use local profile
+        setProfile(localProfile);
     }
 }
 
@@ -63,6 +72,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (!isSupabaseConfigured) {
             console.warn('[AuthProvider] Supabase not configured — running in offline mode');
+            // Load profile from local storage
+            LocalProfileStore.getProfile().then((localProfile) => {
+                useStore.getState().setProfile(localProfile);
+            });
             return;
         }
 

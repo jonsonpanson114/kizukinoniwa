@@ -13,6 +13,7 @@ import { Database } from '../types/supabase';
 import { ForeshadowingService } from '../lib/services/foreshadowing';
 import { LocalStoryStore } from '../lib/localStoryStore';
 import { LocalKizukiStore } from '../lib/localKizukiStore';
+import { LocalProfileStore } from '../lib/localProfileStore';
 
 type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
 type KizukiInsert = Database['public']['Tables']['kizuki']['Insert'];
@@ -88,23 +89,38 @@ export default function WriteScreen() {
                     }
                     await supabase.from('profiles').update(updateData).eq('id', user.id);
 
-                    if (profile) {
-                        setProfile({
-                            ...profile,
-                            current_day: newDay,
-                            current_phase: phaseChanged ? newPhase : profile.current_phase,
-                            phase_started_at: phaseChanged ? new Date().toISOString() : profile.phase_started_at,
-                        });
-                    }
+                    const updatedProfile = {
+                        ...profile,
+                        current_day: newDay,
+                        current_phase: phaseChanged ? newPhase : (profile?.current_phase ?? 1),
+                        phase_started_at: phaseChanged ? new Date().toISOString() : (profile?.phase_started_at ?? null),
+                    };
+                    if (profile) setProfile({ ...profile, ...updatedProfile });
+                    // Always persist locally so phase survives app restart
+                    await LocalProfileStore.saveProfile({
+                        current_day: newDay,
+                        current_phase: updatedProfile.current_phase,
+                        phase_started_at: updatedProfile.phase_started_at,
+                    });
                 } catch (e) {
                     console.log('Failed to save Kizuki/Profile (Offline mode):', e);
-                    // Fallback: Save Kizuki Locally
+                    // Fallback: Save Kizuki and Profile locally
                     await LocalKizukiStore.saveKizuki({
                         user_id: user.id,
                         content: content,
                         question_prompt: dailyPrompt,
                         created_at: new Date().toISOString()
                     });
+                    const currentDay = profile?.current_day ?? 1;
+                    const newDay = currentDay + 1;
+                    const newPhase = getNextPhase(newDay);
+                    const updatedProfile = {
+                        current_day: newDay,
+                        current_phase: newPhase,
+                        phase_started_at: newPhase !== (profile?.current_phase ?? 1) ? new Date().toISOString() : (profile?.phase_started_at ?? null),
+                    };
+                    if (profile) setProfile({ ...profile, ...updatedProfile });
+                    await LocalProfileStore.saveProfile(updatedProfile);
                 }
             }
 
