@@ -7,6 +7,7 @@ import { useStore } from '../stores/useStore';
 import { COLORS } from '../constants/theme';
 import { useEffect, useState, useCallback } from 'react';
 import { LocalStoryStore } from '../lib/localStoryStore';
+import { LocalProfileStore } from '../lib/localProfileStore';
 import { supabase } from '../lib/supabase';
 import { Database } from '../types/supabase';
 import { ForeshadowingList } from '../components/ForeshadowingList';
@@ -49,16 +50,35 @@ export default function HomeScreen() {
     }, []);
 
     const refreshProfile = useCallback(async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        // LocalProfileStore is the authoritative source for day/phase (Supabase may be stale)
+        const localProfile = await LocalProfileStore.getProfile();
 
-        const { data } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: remoteProfile } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
 
-        if (data) setProfile(data);
+                if (remoteProfile) {
+                    const remoteDay = remoteProfile.current_day ?? 0;
+                    if (remoteDay > localProfile.current_day) {
+                        // Remote is more advanced (multi-device scenario)
+                        setProfile(remoteProfile);
+                    } else {
+                        // Local is more advanced — preserve local progress
+                        setProfile({ ...remoteProfile, ...localProfile, id: remoteProfile.id });
+                    }
+                    return;
+                }
+            }
+        } catch (e) {
+            console.log('Supabase profile fetch failed, using local:', e);
+        }
+
+        setProfile(localProfile);
     }, [setProfile]);
 
     // Refresh on screen focus
