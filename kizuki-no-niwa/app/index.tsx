@@ -1,11 +1,8 @@
 import { View, Text, FlatList } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { WashiBackground } from '../components/WashiBackground';
 import { IsakaButton } from '../components/IsakaButton';
-import { useStore } from '../stores/useStore';
-import { COLORS } from '../constants/theme';
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { LocalStoryStore } from '../lib/localStoryStore';
 import { LocalProfileStore } from '../lib/localProfileStore';
 import { supabase } from '../lib/supabase';
@@ -17,11 +14,11 @@ type Story = Database['public']['Tables']['stories']['Row'];
 
 export default function HomeScreen() {
     const router = useRouter();
-    const navigation = useNavigation();
-    const profile = useStore((state) => state.profile);
-    const setProfile = useStore((state) => state.setProfile);
     const [recentStories, setRecentStories] = useState<Story[]>([]);
     const [randomFragment, setRandomFragment] = useState<Story | null>(null);
+    // Read day/phase directly from LocalProfileStore — bypasses Zustand entirely
+    const [currentDay, setCurrentDay] = useState(1);
+    const [currentPhase, setCurrentPhase] = useState(1);
 
     const fetchStories = useCallback(async () => {
         // 1. Fetch Remote
@@ -49,27 +46,16 @@ export default function HomeScreen() {
         }
     }, []);
 
-    const refreshProfile = useCallback(async () => {
-        // LocalProfileStore is the sole source of truth for day/phase
-        const localProfile = await LocalProfileStore.getProfile();
-        const current = useStore.getState().profile;
-        setProfile({
-            id: current?.id ?? localProfile.id,
-            current_phase: localProfile.current_phase,
-            current_day: localProfile.current_day,
-            phase_started_at: localProfile.phase_started_at,
-            created_at: current?.created_at ?? localProfile.created_at,
-        });
-    }, [setProfile]);
-
-    // Refresh on screen focus
-    useEffect(() => {
-        const unsubscribe = navigation.addListener('focus', () => {
+    // useFocusEffect fires every time this screen comes into focus (works on web + native)
+    useFocusEffect(
+        useCallback(() => {
             fetchStories();
-            refreshProfile();
-        });
-        return unsubscribe;
-    }, [navigation, fetchStories, refreshProfile]);
+            LocalProfileStore.getProfile().then(p => {
+                setCurrentDay(p.current_day);
+                setCurrentPhase(p.current_phase);
+            });
+        }, [fetchStories])
+    );
 
     const getPhaseName = (phase: number) => {
         switch (phase) {
@@ -88,10 +74,10 @@ export default function HomeScreen() {
                     {new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })}
                 </Text>
                 <Text className="text-sumi font-serif text-3xl text-center mb-1">
-                    {getPhaseName(profile?.current_phase || 1)}
+                    {getPhaseName(currentPhase)}
                 </Text>
                 <Text className="text-stone font-sans text-xs text-center tracking-widest uppercase">
-                    Phase {profile?.current_phase || 1} - Day {profile?.current_day || 1}
+                    Phase {currentPhase} - Day {currentDay}
                 </Text>
             </View>
 
@@ -125,8 +111,7 @@ export default function HomeScreen() {
                     className="w-full max-w-xs"
                 />
 
-                {/* Jinnai: "Locks are just decorations." Unlocked for user. */}
-                {(profile?.current_phase || 1) >= 2 && (
+                {currentPhase >= 2 && (
                     <>
                         <View className="h-4" />
                         <IsakaButton
@@ -164,7 +149,6 @@ export default function HomeScreen() {
                     }
                 />
             </View>
-            {/* ... existing code ... */}
             <PWAGuide />
         </WashiBackground>
     );
