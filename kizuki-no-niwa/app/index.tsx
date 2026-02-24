@@ -50,35 +50,16 @@ export default function HomeScreen() {
     }, []);
 
     const refreshProfile = useCallback(async () => {
-        // LocalProfileStore is the authoritative source for day/phase (Supabase may be stale)
+        // LocalProfileStore is the sole source of truth for day/phase
         const localProfile = await LocalProfileStore.getProfile();
-
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                const { data: remoteProfile } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', user.id)
-                    .single();
-
-                if (remoteProfile) {
-                    const remoteDay = remoteProfile.current_day ?? 0;
-                    if (remoteDay > localProfile.current_day) {
-                        // Remote is more advanced (multi-device scenario)
-                        setProfile(remoteProfile);
-                    } else {
-                        // Local is more advanced — preserve local progress
-                        setProfile({ ...remoteProfile, ...localProfile, id: remoteProfile.id });
-                    }
-                    return;
-                }
-            }
-        } catch (e) {
-            console.log('Supabase profile fetch failed, using local:', e);
-        }
-
-        setProfile(localProfile);
+        const current = useStore.getState().profile;
+        setProfile({
+            id: current?.id ?? localProfile.id,
+            current_phase: localProfile.current_phase,
+            current_day: localProfile.current_day,
+            phase_started_at: localProfile.phase_started_at,
+            created_at: current?.created_at ?? localProfile.created_at,
+        });
     }, [setProfile]);
 
     // Refresh on screen focus

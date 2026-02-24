@@ -50,19 +50,30 @@ async function handleSession(session: Session | null) {
     const { setSession, setProfile } = useStore.getState();
     setSession(session);
 
+    // Local profile is always the source of truth for day/phase progress
     const localProfile = await LocalProfileStore.getProfile();
 
+    // Set local profile immediately so the UI never shows stale/null data
+    setProfile(localProfile);
+
     if (session?.user) {
-        const remoteProfile = await fetchOrCreateProfile(session.user.id);
-        // Use whichever profile is more advanced (local wins if ahead)
-        if (remoteProfile && localProfile.current_day > (remoteProfile.current_day ?? 1)) {
-            setProfile({ ...remoteProfile, ...localProfile, id: remoteProfile.id });
-        } else {
-            setProfile(remoteProfile);
+        // Best-effort remote sync: only override local if remote is more advanced
+        try {
+            const remoteProfile = await fetchOrCreateProfile(session.user.id);
+            if (remoteProfile) {
+                const remoteDay = remoteProfile.current_day ?? 0;
+                if (remoteDay > localProfile.current_day) {
+                    // Remote is more advanced (e.g., wrote from another device)
+                    setProfile(remoteProfile);
+                } else {
+                    // Local is more advanced or equal — keep local progress, use remote ID
+                    setProfile({ ...remoteProfile, ...localProfile, id: remoteProfile.id });
+                }
+            }
+            // If remoteProfile is null, keep localProfile already set above
+        } catch (e) {
+            console.warn('Remote profile sync failed, using local:', e);
         }
-    } else {
-        // No auth session — use local profile
-        setProfile(localProfile);
     }
 }
 
