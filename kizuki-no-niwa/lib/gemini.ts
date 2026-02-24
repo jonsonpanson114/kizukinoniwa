@@ -109,6 +109,7 @@ export async function generateStory(
                     temperature: 0.9,
                     maxOutputTokens: 2048,
                     responseMimeType: 'application/json',
+                    thinkingConfig: { thinkingBudget: 0 },
                 },
             }),
         });
@@ -196,6 +197,7 @@ export async function generateReply(
                 generationConfig: {
                     temperature: 0.8,
                     maxOutputTokens: 150, // Short reply
+                    thinkingConfig: { thinkingBudget: 0 },
                 },
             }),
         });

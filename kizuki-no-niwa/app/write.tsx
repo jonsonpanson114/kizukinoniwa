@@ -233,7 +233,7 @@ export default function WriteScreen() {
             }
 
             // Navigation
-            router.replace(`/story/${storyId}?content=${encodeURIComponent(generatedStory.story_text)}&tags=${encodeURIComponent(JSON.stringify(generatedStory.mood_tags))}&character=${generatedStory.character}`);
+            router.replace(`/story/${storyId}?content=${encodeURIComponent(generatedStory.story_text)}&tags=${encodeURIComponent(JSON.stringify(generatedStory.mood_tags))}&character=${generatedStory.character}&phase=${savedProfile.current_phase}&day=${savedProfile.current_day}`);
 
         } catch (e) {
             console.error(e);
