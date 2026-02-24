@@ -50,20 +50,32 @@ export default function WriteScreen() {
 
         let user: any = { id: 'mock-user-id', email: 'mock@example.com' };
 
-        // Force mock user if offline/null (Verify Phase)
-        if (!user) {
-            console.log('Using Mock User for Offline Verification');
-            user = { id: 'mock-user-id', email: 'mock@example.com' } as any;
-
-            // Allow saving kizuki even for mock user (local only)
-            // The previous logic skipped block 1 if user was null initially, 
-            // but now we force user, so block 1 will run. 
-            // We just need to ensure the local fallback inside block 1 triggers.
-        }
-
         try {
             let storyId = '';
             let generatedStory;
+
+            // Read authoritative day/phase from local storage (not Zustand, which may reflect stale remote data)
+            const savedProfile = await LocalProfileStore.getProfile();
+            const currentDay = savedProfile.current_day;
+            const newDay = currentDay + 1;
+            const newPhase = getNextPhase(newDay);
+            const phaseChanged = newPhase !== savedProfile.current_phase;
+            const newPhasedAt = phaseChanged ? new Date().toISOString() : savedProfile.phase_started_at;
+
+            const updatedProfileData = {
+                current_day: newDay,
+                current_phase: newPhase,
+                phase_started_at: newPhasedAt,
+            };
+
+            // Save to local store first (source of truth)
+            await LocalProfileStore.saveProfile(updatedProfileData);
+            // Update Zustand for UI
+            setProfile({
+                id: profile?.id ?? savedProfile.id,
+                created_at: profile?.created_at ?? savedProfile.created_at,
+                ...updatedProfileData,
+            });
 
             // 1. Save Kizuki (if user exists and connected)
             if (user) {
@@ -76,51 +88,21 @@ export default function WriteScreen() {
 
                     await supabase.from('kizuki').insert(insertPayload);
 
-                    // Update Profile Logic
-                    const currentDay = profile?.current_day ?? 1;
-                    const newDay = currentDay + 1;
-                    const newPhase = getNextPhase(newDay);
-                    const phaseChanged = newPhase !== (profile?.current_phase ?? 1);
-
                     const updateData: ProfileUpdate = { current_day: newDay };
                     if (phaseChanged) {
                         updateData.current_phase = newPhase;
-                        updateData.phase_started_at = new Date().toISOString();
+                        updateData.phase_started_at = newPhasedAt;
                     }
                     await supabase.from('profiles').update(updateData).eq('id', user.id);
-
-                    const updatedProfile = {
-                        ...profile,
-                        current_day: newDay,
-                        current_phase: phaseChanged ? newPhase : (profile?.current_phase ?? 1),
-                        phase_started_at: phaseChanged ? new Date().toISOString() : (profile?.phase_started_at ?? null),
-                    };
-                    if (profile) setProfile({ ...profile, ...updatedProfile });
-                    // Always persist locally so phase survives app restart
-                    await LocalProfileStore.saveProfile({
-                        current_day: newDay,
-                        current_phase: updatedProfile.current_phase,
-                        phase_started_at: updatedProfile.phase_started_at,
-                    });
                 } catch (e) {
-                    console.log('Failed to save Kizuki/Profile (Offline mode):', e);
-                    // Fallback: Save Kizuki and Profile locally
+                    console.log('Failed to save Kizuki/Profile to Supabase (offline mode):', e);
+                    // Fallback: Save Kizuki locally
                     await LocalKizukiStore.saveKizuki({
                         user_id: user.id,
                         content: content,
                         question_prompt: dailyPrompt,
                         created_at: new Date().toISOString()
                     });
-                    const currentDay = profile?.current_day ?? 1;
-                    const newDay = currentDay + 1;
-                    const newPhase = getNextPhase(newDay);
-                    const updatedProfile = {
-                        current_day: newDay,
-                        current_phase: newPhase,
-                        phase_started_at: newPhase !== (profile?.current_phase ?? 1) ? new Date().toISOString() : (profile?.phase_started_at ?? null),
-                    };
-                    if (profile) setProfile({ ...profile, ...updatedProfile });
-                    await LocalProfileStore.saveProfile(updatedProfile);
                 }
             }
 
@@ -142,8 +124,8 @@ export default function WriteScreen() {
 
             try {
                 generatedStory = await generateStory(
-                    profile?.current_phase ?? 1,
-                    profile?.current_day ?? 1,
+                    savedProfile.current_phase,
+                    savedProfile.current_day,
                     content,
                     pendingSeeds
                 );
@@ -155,7 +137,7 @@ export default function WriteScreen() {
 
                 // GENERATE MOCK BUT SHOW ERROR FOR DEBUGGING
                 generatedStory = {
-                    story_text: `（※エラー発生: ${errorMessage}）\n\n（以下はモック生成です）\n\n「${content}」\n\nその言葉が、ふと風に乗って聞こえた気がした。Phase ${profile?.current_phase ?? 1}の空は高く、Day ${profile?.current_day ?? 1}の光が差している。\n\nハルは珈琲を飲みながら、「また変なのが聞こえたな」と呟く。\n\n世界は相変わらず、少しだけズレているようだ。`,
+                    story_text: `（※エラー発生: ${errorMessage}）\n\n（以下はモック生成です）\n\n「${content}」\n\nその言葉が、ふと風に乗って聞こえた気がした。Phase ${savedProfile.current_phase}の空は高く、Day ${savedProfile.current_day}の光が差している。\n\nハルは珈琲を飲みながら、「また変なのが聞こえたな」と呟く。\n\n世界は相変わらず、少しだけズレているようだ。`,
                     summary_for_next: "生成失敗",
                     mood_tags: ["Error: " + errorMessage.substring(0, 10)],
                     motifs: ["雨の音"],
@@ -177,8 +159,8 @@ export default function WriteScreen() {
                             summary: generatedStory.summary_for_next,
                             mood_tags: generatedStory.mood_tags,
                             character: generatedStory.character,
-                            phase: profile?.current_phase ?? 1,
-                            day: profile?.current_day ?? 1,
+                            phase: savedProfile.current_phase,
+                            day: savedProfile.current_day,
                         })
                         .select()
                         .single();
@@ -202,8 +184,8 @@ export default function WriteScreen() {
                     summary: generatedStory.summary_for_next,
                     mood_tags: generatedStory.mood_tags,
                     character: generatedStory.character,
-                    phase: profile?.current_phase ?? 1,
-                    day: profile?.current_day ?? 1,
+                    phase: savedProfile.current_phase,
+                    day: savedProfile.current_day,
                     created_at: new Date().toISOString()
                 });
             }
