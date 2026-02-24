@@ -213,21 +213,34 @@ export default function WriteScreen() {
             // 6. Check for Phase Progression (Unlock Sora)
             // Condition: 3 stories written & currently Phase 1
             if (user && (profile?.current_phase || 1) === 1) {
-                const { count } = await supabase
-                    .from('stories')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('user_id', user.id);
+                let count = 0;
+                try {
+                    const { count: remoteCount } = await supabase
+                        .from('stories')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('user_id', user.id);
+                    count = remoteCount || 0;
+                } catch (e) {
+                    console.warn("Failed to check remote stories count", e);
+                    // Offline fallback
+                    const localProps = await LocalStoryStore.getStories();
+                    count = localProps.length;
+                }
 
-                if (count !== null && count >= 3) {
-                    // Upgrade to Phase 2 (Root)
-                    const { error: phaseError } = await supabase
-                        .from('profiles')
-                        .update({ current_phase: 2 })
-                        .eq('id', user.id);
-
-                    if (!phaseError) {
+                if (count >= 3) {
+                    try {
+                        // Upgrade to Phase 2 (Root)
+                        await supabase
+                            .from('profiles')
+                            .update({ current_phase: 2 })
+                            .eq('id', user.id);
                         alert("庭の気配が変わりました...\n(Phase 2: Root へ移行しました)");
-                        // Profile refresh will happen on Home screen focus
+                    } catch (e) {
+                        console.warn("Failed to update remote profile phase", e);
+                        // Make sure we also update the local profile here for offline play
+                        const current = await LocalProfileStore.getProfile();
+                        await LocalProfileStore.saveProfile({ ...current, current_phase: 2 });
+                        alert("庭の気配が変わりました...\n(Phase 2: Root へ移行しました) [オフライン]");
                     }
                 }
             }
