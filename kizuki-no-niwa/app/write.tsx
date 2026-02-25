@@ -124,8 +124,8 @@ export default function WriteScreen() {
 
             try {
                 generatedStory = await generateStory(
-                    savedProfile.current_phase,
-                    savedProfile.current_day,
+                    updatedProfileData.current_phase,
+                    updatedProfileData.current_day,
                     content,
                     pendingSeeds
                 );
@@ -137,7 +137,7 @@ export default function WriteScreen() {
 
                 // GENERATE MOCK BUT SHOW ERROR FOR DEBUGGING
                 generatedStory = {
-                    story_text: `（※エラー発生: ${errorMessage}）\n\n（以下はモック生成です）\n\n「${content}」\n\nその言葉が、ふと風に乗って聞こえた気がした。Phase ${savedProfile.current_phase}の空は高く、Day ${savedProfile.current_day}の光が差している。\n\nハルは珈琲を飲みながら、「また変なのが聞こえたな」と呟く。\n\n世界は相変わらず、少しだけズレているようだ。`,
+                    story_text: `（※エラー発生: ${errorMessage}）\n\n（以下はモック生成です）\n\n「${content}」\n\nその言葉が、ふと風に乗って聞こえた気がした。Phase ${updatedProfileData.current_phase}の空は高く、Day ${updatedProfileData.current_day}の光が差している。\n\nハルは珈琲を飲みながら、「また変なのが聞こえたな」と呟く。\n\n世界は相変わらず、少しだけズレているようだ。`,
                     summary_for_next: "生成失敗",
                     mood_tags: ["Error: " + errorMessage.substring(0, 10)],
                     motifs: ["雨の音"],
@@ -159,8 +159,8 @@ export default function WriteScreen() {
                             summary: generatedStory.summary_for_next,
                             mood_tags: generatedStory.mood_tags,
                             character: generatedStory.character,
-                            phase: savedProfile.current_phase,
-                            day: savedProfile.current_day,
+                            phase: updatedProfileData.current_phase,
+                            day: updatedProfileData.current_day,
                         })
                         .select()
                         .single();
@@ -184,8 +184,8 @@ export default function WriteScreen() {
                     summary: generatedStory.summary_for_next,
                     mood_tags: generatedStory.mood_tags,
                     character: generatedStory.character,
-                    phase: savedProfile.current_phase,
-                    day: savedProfile.current_day,
+                    phase: updatedProfileData.current_phase,
+                    day: updatedProfileData.current_day,
                     created_at: new Date().toISOString()
                 });
             }
@@ -246,7 +246,7 @@ export default function WriteScreen() {
             }
 
             // Navigation
-            router.replace(`/story/${storyId}?content=${encodeURIComponent(generatedStory.story_text)}&tags=${encodeURIComponent(JSON.stringify(generatedStory.mood_tags))}&character=${generatedStory.character}&phase=${savedProfile.current_phase}&day=${savedProfile.current_day}`);
+            router.replace(`/story/${storyId}?content=${encodeURIComponent(generatedStory.story_text)}&tags=${encodeURIComponent(JSON.stringify(generatedStory.mood_tags))}&character=${generatedStory.character}&phase=${updatedProfileData.current_phase}&day=${updatedProfileData.current_day}`);
 
         } catch (e) {
             console.error(e);
