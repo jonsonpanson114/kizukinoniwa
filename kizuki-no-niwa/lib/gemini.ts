@@ -1,7 +1,7 @@
 import { Config } from './config';
 
 const GEMINI_API_KEY = Config.GEMINI_API_KEY;
-const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_MODEL = 'gemini-2.5-flash-lite';
 
 const getSystemPrompt = (phase: number) => `あなたは「伊坂幸太郎」の作風を深く理解したAI作家です。
 以下の特徴を備えた、ウィットと伏線に富んだショートショートを執筆してください。
