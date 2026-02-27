@@ -22,8 +22,11 @@ export const LocalProfileStore = {
     async getProfile(): Promise<LocalProfile> {
         try {
             const json = await AsyncStorage.getItem(STORAGE_KEY);
-            return json ? JSON.parse(json) : { ...DEFAULT_PROFILE };
-        } catch {
+            const profile = json ? JSON.parse(json) : { ...DEFAULT_PROFILE };
+            console.log('[LocalProfileStore] getProfile ->', profile);
+            return profile;
+        } catch (e) {
+            console.warn('[LocalProfileStore] getProfile failed, returning default:', e);
             return { ...DEFAULT_PROFILE };
         }
     },
@@ -33,8 +36,10 @@ export const LocalProfileStore = {
             const current = await this.getProfile();
             const updated = { ...current, ...profile };
             await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+            console.log('[LocalProfileStore] saveProfile -> saved:', updated);
         } catch (e) {
-            console.error('Failed to save local profile:', e);
+            console.error('[LocalProfileStore] Failed to save local profile:', e);
+            throw e; // Re-throw so caller can handle it
         }
     },
 };
