@@ -1,6 +1,5 @@
 import { TouchableOpacity, Text, TouchableOpacityProps, ActivityIndicator } from 'react-native';
 import { COLORS } from '../constants/theme';
-import { clsx } from 'clsx'; // Assuming clsx or string concatenation. Using simple string for now if clsx not installed.
 
 interface IsakaButtonProps extends TouchableOpacityProps {
     title: string;

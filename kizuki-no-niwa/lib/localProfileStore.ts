@@ -26,7 +26,11 @@ export const LocalProfileStore = {
 
             // Web redundancy: try direct localStorage if AsyncStorage returns null
             if (!json && Platform.OS === 'web' && typeof window !== 'undefined') {
-                json = window.localStorage.getItem(STORAGE_KEY);
+                try {
+                    json = window.localStorage.getItem(STORAGE_KEY);
+                } catch {
+                    // Ignore localStorage errors
+                }
             }
 
             const profile = json ? JSON.parse(json) : { ...DEFAULT_PROFILE };
@@ -48,7 +52,11 @@ export const LocalProfileStore = {
 
             // Web redundancy: direct localStorage
             if (Platform.OS === 'web' && typeof window !== 'undefined') {
-                window.localStorage.setItem(STORAGE_KEY, json);
+                try {
+                    window.localStorage.setItem(STORAGE_KEY, json);
+                } catch {
+                    // Ignore localStorage errors
+                }
             }
 
             console.log('[LocalProfileStore] saveProfile -> saved:', updated);

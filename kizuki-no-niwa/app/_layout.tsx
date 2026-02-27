@@ -10,7 +10,7 @@ import { AuthProvider } from '../components/AuthProvider';
 import { ErrorBoundary } from 'react-error-boundary';
 import { View, Text, ScrollView } from 'react-native';
 
-function ErrorFallback({ error }: { error: Error }) {
+function ErrorFallback({ error }: { error: any }) {
   return (
     <View style={{ flex: 1, padding: 20, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F5F5F0' }}>
       <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 10, color: '#DC2626' }}>Oops! Something went wrong.</Text>
