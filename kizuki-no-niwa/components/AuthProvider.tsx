@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useStore } from '../stores/useStore';
 import { COLORS } from '../constants/theme';
 import { Config } from '../lib/config';
-import { LocalProfileStore } from '../lib/localProfileStore';
+import { LocalProfileStore, LocalProfile } from '../lib/localProfileStore';
 
 const isSupabaseConfigured = Boolean(
     Config.SUPABASE_URL &&
@@ -62,15 +62,19 @@ async function handleSession(session: Session | null) {
             const remoteProfile = await fetchOrCreateProfile(session.user.id);
             if (remoteProfile) {
                 const remoteDay = remoteProfile.current_day ?? 0;
-                if (remoteDay > localProfile.current_day) {
-                    // Remote is more advanced (e.g., wrote from another device)
-                    setProfile(remoteProfile);
-                } else {
-                    // Local is more advanced or equal — keep local progress, use remote ID
-                    setProfile({ ...remoteProfile, ...localProfile, id: remoteProfile.id });
-                }
+                const isRemoteBetter = remoteDay > localProfile.current_day;
+                const finalProfile: LocalProfile = {
+                    id: String(remoteProfile.id),
+                    current_phase: (isRemoteBetter ? remoteProfile.current_phase : localProfile.current_phase) || 1,
+                    current_day: (isRemoteBetter ? remoteProfile.current_day : localProfile.current_day) || 1,
+                    phase_started_at: (isRemoteBetter ? remoteProfile.phase_started_at : localProfile.phase_started_at) || null,
+                    created_at: (remoteProfile.created_at || localProfile.created_at) || null,
+                };
+
+                setProfile(finalProfile);
+                // Important: Keep local store in sync with the merged/new profile
+                await LocalProfileStore.saveProfile(finalProfile);
             }
-            // If remoteProfile is null, keep localProfile already set above
         } catch (e) {
             console.warn('Remote profile sync failed, using local:', e);
         }

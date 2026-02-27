@@ -49,10 +49,10 @@ export default function HomeScreen() {
     // useFocusEffect fires every time this screen comes into focus (works on web + native)
     useFocusEffect(
         useCallback(() => {
-            fetchStories();
             LocalProfileStore.getProfile().then(p => {
                 setCurrentDay(p.current_day);
                 setCurrentPhase(p.current_phase);
+                fetchStories(); // Fetch stories after we have the profile context
             });
         }, [fetchStories])
     );

@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 const STORAGE_KEY = 'kizuki_local_profile';
 
@@ -21,7 +22,13 @@ const DEFAULT_PROFILE: LocalProfile = {
 export const LocalProfileStore = {
     async getProfile(): Promise<LocalProfile> {
         try {
-            const json = await AsyncStorage.getItem(STORAGE_KEY);
+            let json = await AsyncStorage.getItem(STORAGE_KEY);
+
+            // Web redundancy: try direct localStorage if AsyncStorage returns null
+            if (!json && Platform.OS === 'web' && typeof window !== 'undefined') {
+                json = window.localStorage.getItem(STORAGE_KEY);
+            }
+
             const profile = json ? JSON.parse(json) : { ...DEFAULT_PROFILE };
             console.log('[LocalProfileStore] getProfile ->', profile);
             return profile;
@@ -35,11 +42,19 @@ export const LocalProfileStore = {
         try {
             const current = await this.getProfile();
             const updated = { ...current, ...profile };
-            await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+            const json = JSON.stringify(updated);
+
+            await AsyncStorage.setItem(STORAGE_KEY, json);
+
+            // Web redundancy: direct localStorage
+            if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                window.localStorage.setItem(STORAGE_KEY, json);
+            }
+
             console.log('[LocalProfileStore] saveProfile -> saved:', updated);
         } catch (e) {
             console.error('[LocalProfileStore] Failed to save local profile:', e);
-            throw e; // Re-throw so caller can handle it
+            throw e;
         }
     },
 };
