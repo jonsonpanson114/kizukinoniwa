@@ -31,6 +31,12 @@ export const Config: AppConfig = {
     IS_PROD: process.env.NODE_ENV === 'production',
 };
 
+export const IS_SUPABASE_CONFIGURED = Boolean(
+    Config.SUPABASE_URL &&
+    Config.SUPABASE_ANON_KEY &&
+    !Config.SUPABASE_URL.includes('your_')
+);
+
 // Security Validator
 export const validateConfig = () => {
     const missing = Object.entries(Config)

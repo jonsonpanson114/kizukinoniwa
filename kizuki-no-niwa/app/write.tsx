@@ -14,6 +14,7 @@ import { ForeshadowingService } from '../lib/services/foreshadowing';
 import { LocalStoryStore } from '../lib/localStoryStore';
 import { LocalKizukiStore } from '../lib/localKizukiStore';
 import { LocalProfileStore } from '../lib/localProfileStore';
+import { IS_SUPABASE_CONFIGURED } from '../lib/config';
 
 type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
 type KizukiInsert = Database['public']['Tables']['kizuki']['Insert'];
@@ -35,20 +36,20 @@ export default function WriteScreen() {
         if (!content.trim()) return;
         setIsSubmitting(true);
         setStatusMessage('種を植えています...');
-        if (Platform.OS !== 'web') {
-            try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) { }
+        let user: any = null;
+        if (IS_SUPABASE_CONFIGURED) {
+            try {
+                const { data } = await supabase.auth.getUser();
+                user = data.user;
+            } catch (e) {
+                console.log('Auth check failed:', e);
+            }
         }
 
-        // TEMPORARY: Commented out to bypass AuthRetryableFetchError
-        // let user = null;
-        // try {
-        //     const { data } = await supabase.auth.getUser();
-        //     user = data.user;
-        // } catch (e) {
-        //     console.log('Auth check failed (offline mode):', e);
-        // }
-
-        let user: any = { id: 'mock-user-id', email: 'mock@example.com' };
+        // Fallback or Mock for logic that expects a user object
+        if (!user) {
+            user = { id: 'local-user', email: 'local@example.com' };
+        }
 
         try {
             let storyId = '';
@@ -78,7 +79,7 @@ export default function WriteScreen() {
             });
 
             // 1. Save Kizuki (if user exists and connected)
-            if (user) {
+            if (IS_SUPABASE_CONFIGURED && user) {
                 try {
                     const insertPayload: KizukiInsert = {
                         user_id: user.id,
@@ -95,16 +96,18 @@ export default function WriteScreen() {
                     }
                     await supabase.from('profiles').update(updateData).eq('id', user.id);
                 } catch (e) {
-                    console.log('Failed to save Kizuki/Profile to Supabase (offline mode):', e);
-                    // Fallback: Save Kizuki locally
-                    await LocalKizukiStore.saveKizuki({
-                        user_id: user.id,
-                        content: content,
-                        question_prompt: dailyPrompt,
-                        created_at: new Date().toISOString()
-                    });
+                    console.log('Failed to save Kizuki/Profile to Supabase:', e);
+                    // Local fallback already happens in LocalProfileStore.saveProfile above
                 }
             }
+
+            // Always save Kizuki locally for redundancy/offline history
+            await LocalKizukiStore.saveKizuki({
+                user_id: user.id,
+                content: content,
+                question_prompt: dailyPrompt,
+                created_at: new Date().toISOString()
+            });
 
             // 2. Generate Story (Real AI)
             setStatusMessage('物語が芽吹いています...');
@@ -147,9 +150,9 @@ export default function WriteScreen() {
                 } as any;
             }
 
-            // 3. Save Story (if user exists)
+            // 3. Save Story
             const mockStoryId = 'story-' + Date.now();
-            if (user && generatedStory.mood_tags) {
+            if (IS_SUPABASE_CONFIGURED && user && generatedStory.mood_tags) {
                 try {
                     const { data: storyData } = await supabase
                         .from('stories')
