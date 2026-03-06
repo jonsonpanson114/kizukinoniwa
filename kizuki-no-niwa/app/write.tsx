@@ -28,8 +28,8 @@ export default function WriteScreen() {
     const setProfile = useStore(state => state.setProfile);
 
     const dailyPrompt = useMemo(
-        () => getRandomPrompt(profile?.current_phase ?? 1),
-        [profile?.current_phase],
+        () => getRandomPrompt(profile?.current_phase ?? 1, profile?.current_day ?? 1),
+        [profile?.current_phase, profile?.current_day],
     );
 
     const handleSubmit = async () => {
@@ -112,6 +112,7 @@ export default function WriteScreen() {
             // 2. Generate Story (Real AI)
             setStatusMessage('物語が芽吹いています...');
             let pendingSeeds: { id: string, motif: string }[] = [];
+            let prevSummary = '';
 
             if (user) {
                 try {
@@ -123,6 +124,16 @@ export default function WriteScreen() {
                 } catch (e) {
                     console.log('Failed to harvest seeds:', e);
                 }
+
+                // Get previous story summary for narrative continuity
+                try {
+                    const allStories = await LocalStoryStore.getStories();
+                    if (allStories.length > 0) {
+                        prevSummary = allStories[0].summary || '';
+                    }
+                } catch (e) {
+                    console.log('Failed to get prev story:', e);
+                }
             }
 
             try {
@@ -130,7 +141,8 @@ export default function WriteScreen() {
                     updatedProfileData.current_phase,
                     updatedProfileData.current_day,
                     content,
-                    pendingSeeds
+                    pendingSeeds,
+                    prevSummary
                 );
             } catch (e) {
                 console.error("AI Generation failed:", e);
