@@ -2,6 +2,7 @@ import { View, Text, FlatList } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { WashiBackground } from '../components/WashiBackground';
 import { IsakaButton } from '../components/IsakaButton';
+import { GardenView } from '../components/GardenView';
 import { useState, useCallback } from 'react';
 import { LocalStoryStore } from '../lib/localStoryStore';
 import { LocalProfileStore } from '../lib/localProfileStore';
@@ -68,8 +69,11 @@ export default function HomeScreen() {
     };
 
     return (
-        <WashiBackground className="px-6 pt-12 pb-6">
-            <View className="mb-8">
+        <WashiBackground className="px-0 pt-0 pb-6">
+            {/* 庭の表示 */}
+            <GardenView />
+
+            <View className="px-6 mb-8">
                 <Text className="text-sumi/60 font-serif text-sm text-center mb-2">
                     {new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })}
                 </Text>
@@ -82,7 +86,7 @@ export default function HomeScreen() {
             </View>
 
             {randomFragment && (
-                <View className="mb-8 p-4 border border-stone/20 bg-white/40">
+                <View className="px-6 mb-8 p-4 border border-stone/20 bg-white/40">
                     <Text className="text-stone font-serif text-xs mb-2">Reading Fragment</Text>
                     <Text className="text-sumi/80 font-serif text-sm leading-relaxed line-clamp-3" numberOfLines={3}>
                         {randomFragment.content}
@@ -90,7 +94,7 @@ export default function HomeScreen() {
                 </View>
             )}
 
-            <View className="flex-1 justify-center items-center py-8">
+            <View className="px-6 flex-1 justify-center items-center py-8">
                 <IsakaButton
                     title="気づきを綴る"
                     onPress={() => router.push('/write')}
@@ -124,9 +128,11 @@ export default function HomeScreen() {
                 )}
             </View>
 
-            <ForeshadowingList />
+            <View className="px-6">
+                <ForeshadowingList />
+            </View>
 
-            <View className="flex-1 mt-8">
+            <View className="px-6 flex-1 mt-8">
                 <Text className="text-sumi font-serif text-lg mb-4 border-b border-stone/30 pb-2">
                     紡がれた物語
                 </Text>

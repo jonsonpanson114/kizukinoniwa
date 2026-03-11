@@ -5,6 +5,8 @@ import * as Haptics from 'expo-haptics';
 import { WashiBackground } from '../components/WashiBackground';
 import { IsakaButton } from '../components/IsakaButton';
 import { TextArea } from '../components/TextArea';
+import { GardenView } from '../components/GardenView';
+import { CatCharacter } from '../components/CatCharacter';
 import { supabase } from '../lib/supabase';
 import { useStore } from '../stores/useStore';
 import { getRandomPrompt, getNextPhase } from '../constants/prompts';
@@ -15,6 +17,9 @@ import { LocalStoryStore } from '../lib/localStoryStore';
 import { LocalKizukiStore } from '../lib/localKizukiStore';
 import { LocalProfileStore } from '../lib/localProfileStore';
 import { IS_SUPABASE_CONFIGURED } from '../lib/config';
+import { useGardenStore } from '../stores/gardenStore';
+import { useCatStore } from '../stores/catStore';
+import { SentimentAnalyzer } from '../lib/sentimentAnalyzer';
 
 type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
 type KizukiInsert = Database['public']['Tables']['kizuki']['Insert'];
@@ -26,6 +31,8 @@ export default function WriteScreen() {
     const [statusMessage, setStatusMessage] = useState('');
     const profile = useStore(state => state.profile);
     const setProfile = useStore(state => state.setProfile);
+    const gardenStore = useGardenStore();
+    const catStore = useCatStore();
 
     const dailyPrompt = useMemo(
         () => getRandomPrompt(profile?.current_phase ?? 1, profile?.current_day ?? 1),
@@ -221,6 +228,14 @@ export default function WriteScreen() {
                 ).catch(e => console.error("Failed to resolve seed:", e));
             }
 
+            // 6. Cat Reaction (感情分析に基づく)
+            const catReaction = SentimentAnalyzer.getCatReaction(content);
+            catStore.setReaction(catReaction.type);
+
+            // 7. Grow Garden (庭を成長させる)
+            const allStories = await LocalStoryStore.getStories();
+            gardenStore.growGarden(allStories.length + 1);
+
             if (Platform.OS !== 'web') {
                 try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) { }
             }
@@ -273,8 +288,16 @@ export default function WriteScreen() {
     };
 
     return (
-        <WashiBackground className="px-6 pt-12">
-            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+        <WashiBackground className="px-6 pt-0">
+            {/* 庭の表示 */}
+            <GardenView />
+
+            {/* 猫キャラクター */}
+            <View className="absolute top-[140px] right-8">
+                <CatCharacter size={80} />
+            </View>
+
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1" style={{ marginTop: 16 }}>
                 <View className="mb-8">
                     <Text className="text-sumi font-serif text-xl text-center mb-4 tracking-widest">
                         今日の問い
