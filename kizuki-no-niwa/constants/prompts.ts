@@ -156,12 +156,13 @@ export function getRandomPrompt(phase: number, day: number = 1): string {
 
 /** Phase transition thresholds */
 export const PHASE_THRESHOLDS: Record<number, number> = {
-    2: 8,   // Day 8 -> Phase 2
-    3: 22,  // Day 22 -> Phase 3
-    4: 43,  // Day 43 -> Phase 4
+    2: 3,   // Day 3 -> Phase 2 (Accelerated for playability)
+    3: 15,  // Day 15 -> Phase 3
+    4: 30,  // Day 30 -> Phase 4
 };
 
 export function getNextPhase(currentDay: number): number {
+    // Priority on thresholds (Day count)
     if (currentDay >= PHASE_THRESHOLDS[4]) return 4;
     if (currentDay >= PHASE_THRESHOLDS[3]) return 3;
     if (currentDay >= PHASE_THRESHOLDS[2]) return 2;
