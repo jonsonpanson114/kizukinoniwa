@@ -167,7 +167,8 @@ function buildUserPrompt(
     phase: number,
     day: number,
     kizukiContent: string,
-    pendingMotifs: { id: string, motif: string }[] = []
+    pendingMotifs: { id: string, motif: string }[] = [],
+    prevSummary: string = ''
 ): string {
     const phaseName = ['', '土', '根', '芽', '花'][phase] || '土';
 
@@ -176,6 +177,11 @@ function buildUserPrompt(
         : 'なし';
 
     const dailyGuideline = getDailyGuideline(day);
+    const targetCharacter = phase === 1 ? 'haru' : (phase === 2 ? 'sora' : (Math.random() > 0.5 ? 'haru' : 'sora'));
+    const characterName = targetCharacter === 'haru' ? 'ハル' : 'ソラ';
+    const persona = targetCharacter === 'haru'
+        ? '一人称は「俺」。口調はぶっきらぼうだが、ウィットと比喩に富んでいる。猫の部長を人生の師として崇めている。'
+        : '一人称は「私」。知的で直感的、言葉の裏にある機微を敏感に感じ取る翻訳家。';
 
     return `現在: ${phaseName}フェーズ (Phase ${phase}), Day ${day}
 
@@ -190,6 +196,9 @@ ${prevSummary || '（これが最初のエピソードです）'}
 未回収の伏線 (必ず物語に織り込んでください):
 ${motifInstruction}
 
+登場キャラクター: **${characterName}** （必ずこのキャラクターの一人称で書いてください）
+${persona}
+
 指示:
 - **物語は必ず前回のあらすじから続けてください。単発で終わらせず、話を前に進めてください。**
 - **伊坂幸太郎の連作小説のように、キャラクターと謎が継続していく物語を書いてください。**
@@ -198,7 +207,7 @@ ${motifInstruction}
 - 台詞を軸にテンポよく展開する（無駄な状況説明は省く）
 - ユーザーの気づきを「誰かが仕組んだ謎」や「奇妙な偶然」として変換して物語の核にする
 - 部長（猫）に哲学的な一幕を必ず入れる
-- Phase ${phase}のルールに従い、適切なキャラクターを使ってください
+- Phase ${phase}のルールに従ってください
 - "未回収の伏線"がある場合、それを物語の鍵として登場させ、可能なら回収（解決）してください
 - 必要に応じて新しい伏線を仕込んでください（頻度は3〜5エピソードに1回程度）
 - 余韻で終わること（完全な解決はしない）
@@ -208,7 +217,8 @@ ${motifInstruction}
   "story_text": "物語本文",
   "summary_for_next": "次回への引き継ぎ要約（100文字以内）",
   "mood_tags": ["タグ1", "タグ2"],
-  "character": "haru" または "sora",
+  "motifs": ["キーワード1", "キーワード2"],
+  "character": "${targetCharacter}",
   "new_foreshadowing": null または "伏線モチーフの文字列",
   "resolved_foreshadowing_id": null または "伏線のuuid" (今回回収した伏線があれば)
 }`;
