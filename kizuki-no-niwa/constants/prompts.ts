@@ -150,8 +150,8 @@ export const DAILY_PROMPTS: Record<number, string[]> = {
 
 export function getRandomPrompt(phase: number, day: number = 1): string {
     const prompts = DAILY_PROMPTS[phase] || DAILY_PROMPTS[1];
-    // Use day to get consistent prompt (0-indexed, so day-1)
-    return prompts[(day - 1) % prompts.length];
+    // Random prompt from the phase's list
+    return prompts[Math.floor(Math.random() * prompts.length)];
 }
 
 /** Phase transition thresholds */
