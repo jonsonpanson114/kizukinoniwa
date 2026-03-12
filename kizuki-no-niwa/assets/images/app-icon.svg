@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="skyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#F5F5E0"/>
+      <stop offset="100%" style="stop-color:#E8D8F0"/>
+    </linearGradient>
+    <linearGradient id="groundGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#D4C4B0"/>
+      <stop offset="100%" style="stop-color:#A0522D0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background sky -->
+  <rect width="1024" height="1024" fill="url(#skyGradient)"/>
+
+  <!-- Distant mountains -->
+  <path d="M0 600 Q256 450 512 500 Q768 550 1024 500 L1024 600 Z" fill="#B8A0A0" opacity="0.3"/>
+
+  <!-- Ground -->
+  <rect y="600" width="1024" height="424" fill="url(#groundGradient)"/>
+
+  <!-- Garden elements -->
+  <g id="garden">
+    <!-- Sakura tree on the right -->
+    <g transform="translate(720, 320)">
+      <!-- Trunk -->
+      <rect x="20" y="100" width="20" height="120" fill="#8B4513" rx="3"/>
+      <!-- Branches -->
+      <path d="M30 100 Q20 80 10 70 Q0 80 -10 70 Q30 100 30 60" fill="none" stroke="#8B4513" stroke-width="8"/>
+      <path d="M30 100 Q50 70 60 40" fill="none" stroke="#8B4513" stroke-width="6"/>
+      <!-- Pink petals (floating = anti-gravity effect) -->
+      <ellipse cx="80" cy="50" rx="15" ry="20" fill="#FFB7C5" opacity="0.9"/>
+      <ellipse cx="50" cy="60" rx="18" ry="18" fill="#FFB7C5" opacity="0.8"/>
+      <ellipse cx="100" cy="40" rx="12" ry="15" fill="#FFB7C5" opacity="0.7"/>
+      <ellipse cx="20" cy="55" rx="15" ry="12" fill="#FFB7C5" opacity="0.6"/>
+    </g>
+
+    <!-- Cat (部長) silhouette on the left -->
+    <g transform="translate(180, 480)">
+      <ellipse cx="40" cy="20" rx="35" ry="25" fill="#6B4E3D"/>
+      <ellipse cx="20" cy="-5" rx="25" ry="20" fill="#6B4E3D"/>
+      <!-- Ears -->
+      <path d="M10 -10 L0 -25 Q10 -40 20 -25 L30 -10" fill="#6B4E3D"/>
+      <path d="M50 -10 L60 -25 Q50 -40 60 -10 L70 -10" fill="#6B4E3D"/>
+      <!-- Tail tip -->
+      <path d="M35 20 Q40 25 38 30 L42 25" fill="#6B4E3D"/>
+    </g>
+
+    <!-- Floating leaves (antigravity effect) -->
+    <g id="floating-leaves">
+      <path d="M100 100 Q110 80 120 90 Q130 80 140 90" fill="#90EE90" opacity="0.6"/>
+      <circle cx="140" cy="70" r="8" fill="#FFD700" opacity="0.5"/>
+      <path d="M200 150 Q210 130 220 120 Q230 100 240 90" fill="#98FB98" opacity="0.4"/>
+      <ellipse cx="250" cy="60" rx="6" ry="10" fill="#FFB7C5" opacity="0.3"/>
+      <path d="M150 200 Q160 180 170 200 Q180 220 180 230" fill="#DDA0DD" opacity="0.3"/>
+    </g>
+  </g>
+
+  <!-- App title text (hidden, for accessibility) -->
+  <text x="512" y="512" font-family="Noto Sans JP" font-size="24" fill="#F5F5E0" text-anchor="middle" opacity="0">庭</text>
+</svg>
