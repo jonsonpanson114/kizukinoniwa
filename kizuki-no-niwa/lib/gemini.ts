@@ -210,7 +210,6 @@ ${persona}
 - Phase ${phase}のルールに従ってください
 - "未回収の伏線"がある場合、それを物語の鍵として登場させ、可能なら回収（解決）してください
 - 必要に応じて新しい伏線を仕込んでください（頻度は3〜5エピソードに1回程度）
-- 余韻で終わること（完全な解決はしない）
 
 以下のJSON形式のみで出力してください（他のテキストは不要）:
 {
@@ -256,7 +255,7 @@ export async function generateStory(
                 system_instruction: { parts: [{ text: systemPrompt }] },
                 contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
                 generationConfig: {
-                    temperature: 0.9,
+                    temperature: 0.7,
                     maxOutputTokens: 4096,
                     responseMimeType: 'application/json',
                 },
