@@ -34,9 +34,9 @@ export default function WriteScreen() {
     const gardenStore = useGardenStore();
     const catStore = useCatStore();
 
-    const dailyPrompt = useMemo(
-        () => getRandomPrompt(profile?.current_phase ?? 1, profile?.current_day ?? 1),
-        [profile?.current_phase, profile?.current_day],
+    // Fix the prompt so it doesn't change when the day increments during submission
+    const [dailyPrompt] = useState(() => 
+        getRandomPrompt(profile?.current_phase ?? 1, profile?.current_day ?? 1)
     );
 
     const handleSubmit = async () => {
@@ -276,7 +276,7 @@ export default function WriteScreen() {
             }
 
             // Navigation
-            router.replace(`/story/${storyId}?content=${encodeURIComponent(generatedStory.story_text)}&tags=${encodeURIComponent(JSON.stringify(generatedStory.mood_tags))}&character=${generatedStory.character}&phase=${updatedProfileData.current_phase}&day=${updatedProfileData.current_day}`);
+            router.replace(`/story/${storyId}?content=${encodeURIComponent(generatedStory.story_text)}&tags=${encodeURIComponent(JSON.stringify(generatedStory.mood_tags))}&character=${generatedStory.character}&phase=${updatedProfileData.current_phase}&day=${updatedProfileData.current_day}&prompt=${encodeURIComponent(dailyPrompt)}`);
 
         } catch (e) {
             console.error(e);

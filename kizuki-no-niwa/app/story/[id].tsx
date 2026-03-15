@@ -12,7 +12,7 @@ import { LocalStoryStore } from '../../lib/localStoryStore';
 type Story = Database['public']['Tables']['stories']['Row'];
 
 export default function StoryScreen() {
-    const { id, content, tags, character, phase, day } = useLocalSearchParams();
+    const { id, content, tags, character, phase, day, prompt } = useLocalSearchParams();
     const router = useRouter();
     const [story, setStory] = useState<Story | null>(null);
     const [loading, setLoading] = useState(true);
@@ -96,6 +96,7 @@ export default function StoryScreen() {
         <WashiBackground className="pt-12">
             <StoryViewer
                 title={`Phase ${story.phase} - Day ${story.day}`}
+                subtitle={prompt ? decodeURIComponent(prompt as string) : undefined}
                 content={story.content}
             />
             <View className="p-6 pb-12">

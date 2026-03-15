@@ -6,9 +6,10 @@ import { COLORS } from '../constants/theme';
 interface StoryViewerProps {
     content: string;
     title?: string;
+    subtitle?: string;
 }
 
-export function StoryViewer({ content, title }: StoryViewerProps) {
+export function StoryViewer({ content, title, subtitle }: StoryViewerProps) {
     // Split content by paragraphs or lines for staggered animation in the future.
     // For now, just fade in the whole text.
 
@@ -20,8 +21,13 @@ export function StoryViewer({ content, title }: StoryViewerProps) {
         >
             <Animated.View entering={FadeIn.duration(1000).delay(300)}>
                 {title && (
-                    <Text className="text-sumi font-serif text-2xl mb-8 text-center tracking-widest font-bold">
+                    <Text className="text-sumi font-serif text-2xl mb-2 text-center tracking-widest font-bold">
                         {title}
+                    </Text>
+                )}
+                {subtitle && (
+                    <Text className="text-sumi/60 font-serif text-sm mb-8 text-center italic leading-relaxed">
+                        Q: {subtitle}
                     </Text>
                 )}
                 <Text
