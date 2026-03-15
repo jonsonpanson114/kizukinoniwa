@@ -24,7 +24,7 @@ export default function DialogueScreen() {
             // Default greeting if none provided
             const greeting = character === 'haru'
                 ? '...なんだ？人の顔をじっと見て。俺の顔に何かついてるか？'
-                : 'あら、こんにちは。今日はいい天気ね。';
+                : 'あら、ごめんなさい。ちょうど仕事の手を止めて、娘とおやつにしようと思っていたところなの。';
             setMessages([{ role: 'model', text: greeting }]);
         }
     }, [character]);
