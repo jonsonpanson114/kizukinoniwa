@@ -8,7 +8,7 @@ import { IsakaButton } from '../../components/IsakaButton';
 import { generateReply } from '../../lib/gemini';
 
 export default function DialogueScreen() {
-    const { character = 'haru', initialMessage } = useLocalSearchParams();
+    const { id: character = 'haru', initialMessage } = useLocalSearchParams();
     const router = useRouter();
     const [messages, setMessages] = useState<{ role: 'user' | 'model', text: string }[]>([]);
     const [inputText, setInputText] = useState('');

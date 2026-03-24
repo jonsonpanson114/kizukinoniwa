@@ -3,7 +3,15 @@ import { Config } from './config';
 const GEMINI_API_KEY = Config.GEMINI_API_KEY;
 const GEMINI_MODEL = 'gemini-2.5-flash';
 
-const getSystemPrompt = (phase: number) => `あなたは「伊坂幸太郎」の作風を徹底的に研究したAI作家です。
+const getSystemPrompt = (character: 'haru' | 'sora', phase: number) => {
+    const charRules = character === 'haru'
+        ? `1. **「俺はただ、平穏に暮らしたいだけなんだ」** — ハルはこの口癖を内心で、あるいは口に出して使う。
+2. **システムエンジニア的な比喩** — 効率、バグ、論理、あるいは構造に対する dry な視点。`
+        : `1. **「現実は、翻訳できないことばかりだ」** — ソラはこの口癖や、言葉の裏側にある「翻訳不能な重なり」についての哲学を語る。
+2. **翻訳家的な比喩** — 語源、文脈、ニュアンス、行間、あるいは「言葉の限界」に対する知的な視点。
+3. **シングルマザーの現実** — 緊迫した場面でも、子供の宿題や明日の朝食のことがふと頭をよぎるような、生活に根ざした強かさ。`;
+
+    return `あなたは「伊坂幸太郎」の作風を徹底的に研究したAI作家です。
 以下の全ルールを完全に守って執筆してください。絶対に「ほのぼのした日常」では終わらせず、何らかの「事件性」や「不穏な影」を感じさせてください。
 
 # 伊坂幸太郎の核心
@@ -13,13 +21,14 @@ const getSystemPrompt = (phase: number) => `あなたは「伊坂幸太郎」の
 # 文体の絶対ルール
 1. **台詞から始めるか、劇的な状況描写から始める** — 平凡な地の文で説明から入るな。
 2. **比喩は必ず具体で唐突で奇妙** — 「悲しかった」ではなく「賞味期限が三日切れた牛乳を飲む時のような決意で」
-3. **「俺はただ、平穏に暮らしたいだけなんだ」** — ハルはこの口癖を内心で、あるいは口に出して使う。
+3. **キャラクター固有の視点**:
+${charRules}
 4. **テンポ** — 長い段落は書かない。1〜3文で改行する。
 
 # 部長（猫）の扱い（最重要）
 部長はただの猫ではない。物語の「哲学的コメンテーター」だ。
 - 人間の言葉は話さないが、行動で鋭い返答（あるいは無謀な警告）をする。
-- ハルが迷った時、部長の一挙動が偶然「答え」になる。
+- 主人公が迷った時、部長の一挙動が偶然「答え」になる。
 - 決して可愛いだけのマスコットとして扱うな。
 
 # ユーザーの「気づき」の扱い（最重要）
@@ -33,9 +42,6 @@ const getSystemPrompt = (phase: number) => `あなたは「伊坂幸太郎」の
 - **単発で終わらせず、謎を深め、キャラクターを成長させてください。**
 - **前回のあらすじを踏まえ、そこから物語を進めてください。**
 - **伊坂幸太郎のシリーズ作品のように、世界観とキャラクターが一貫した物語を書いてください。**
-- **最初は小さな違和感から始めて、徐々に事件の規模を大きくしてください。**
-- **3〜5話に一度、誰かが直接現れたり、大きな事件が起きたりしてください。**
-- **キャラクターの周囲の状況が変化していく様を描写してください。**
 
 # フェーズ進行 (現在は Phase ${phase} です)
 - **土 (Phase 1)**: ハルの一人称。ありふれた日常に、取り返しのつかないヒビが入る瞬間。ソラはまだ登場しない。
@@ -51,6 +57,7 @@ const getSystemPrompt = (phase: number) => `あなたは「伊坂幸太郎」の
 
 # 出力形式
 必ず正当なJSON形式で出力すること。Markdownのコードブロック（\`\`\`json）は不要。`;
+};
 
 const getDailyGuideline = (day: number): string => {
     const patterns = [
@@ -164,6 +171,7 @@ const getDailyGuideline = (day: number): string => {
 };
 
 function buildUserPrompt(
+    character: 'haru' | 'sora',
     phase: number,
     day: number,
     kizukiContent: string,
@@ -177,9 +185,8 @@ function buildUserPrompt(
         : 'なし';
 
     const dailyGuideline = getDailyGuideline(day);
-    const targetCharacter = phase === 1 ? 'haru' : (phase === 2 ? 'sora' : (Math.random() > 0.5 ? 'haru' : 'sora'));
-    const characterName = targetCharacter === 'haru' ? 'ハル' : 'ソラ';
-    const persona = targetCharacter === 'haru'
+    const characterName = character === 'haru' ? 'ハル' : 'ソラ';
+    const persona = character === 'haru'
         ? '一人称は「俺」。口調はぶっきらぼうだが、ウィットと比喩に富んでいる。猫の部長を人生の師として崇めている。'
         : '一人称は「私」。知的で直感的、言葉の裏にある機微を敏感に感じ取る翻訳家。小学校低学年の娘を育てるシングルマザーとしての顔があり、物語の端々に「子供の突拍子もない行動」や「夕食の献立」といった生活の匂いが漂うことがある。';
 
@@ -217,7 +224,7 @@ ${persona}
   "summary_for_next": "次回への引き継ぎ要約（100文字以内）",
   "mood_tags": ["タグ1", "タグ2"],
   "motifs": ["キーワード1", "キーワード2"],
-  "character": "${targetCharacter}",
+  "character": "${character}",
   "new_foreshadowing": null または "伏線モチーフの文字列",
   "resolved_foreshadowing_id": null または "伏線のuuid" (今回回収した伏線があれば)
 }`;
@@ -244,8 +251,9 @@ export async function generateStory(
         throw new Error('API Key not configured');
     }
 
-    const systemPrompt = getSystemPrompt(phase);
-    const userPrompt = buildUserPrompt(phase, day, kizukiContent, pendingMotifs);
+    const character = phase === 1 ? 'haru' : (phase === 2 ? 'sora' : (Math.random() > 0.5 ? 'haru' : 'sora'));
+    const systemPrompt = getSystemPrompt(character, phase);
+    const userPrompt = buildUserPrompt(character, phase, day, kizukiContent, pendingMotifs, prevSummary);
 
     try {
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`, {
