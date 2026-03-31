@@ -1,194 +1,86 @@
-// 通知サービス
-// 注意: expo-notifications をインストールすると完全に機能します
+import { Platform } from 'react-native';
 
-declare const ExpoNotifications: any;
+const urlBase64ToUint8Array = (base64String: string) => {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+};
 
-export interface NotificationRule {
-  id: string;
-  type: 'streak' | 'time' | 'phase' | 'cat' | 'reminder';
-  message: string;
-  condition: any;
-  enabled: boolean;
-}
-
-export interface ScheduledNotification {
-  id: string;
-  type: string;
-  title: string;
-  body: string;
-  scheduledFor: string;
-  delivered: boolean;
-}
-
-// @ts-ignore - Dynamic import errors are handled at runtime
-export class NotificationService {
-  private static rules: NotificationRule[] = [
-    {
-      id: 'morning_greeting',
-      type: 'time',
-      message: 'おはようございます。今日も庭であなたを待っています。',
-      condition: { time: '08:00' },
-      enabled: false,
-    },
-    {
-      id: 'streak_3',
-      type: 'streak',
-      message: '3日連続の記録、素晴らしいです！部長も喜んでいます。',
-      condition: { days: 3 },
-      enabled: true,
-    },
-    {
-      id: 'streak_7',
-      type: 'streak',
-      message: '1週間連続で記録しました。庭の花が咲きそうです。',
-      condition: { days: 7 },
-      enabled: true,
-    },
-    {
-      id: 'cat_message',
-      type: 'cat',
-      message: '部長からメッセージです。',
-      condition: {},
-      enabled: true,
-    },
-  ];
-
-  private static catMessages = [
-    '今日も頑張ってね。',
-    '庭が寂しくなってきたよ。',
-    '部長は昼寝中。',
-    'いい匂いがするね。',
-    '雨の匂いがする。',
-    '夕日がきれいだよ。',
-    'また明日。',
-  ];
-
-  static async requestPermission(): Promise<boolean> {
-    try {
-      // @ts-ignore
-      const { Notifications } = await (import('expo-notifications') as any);
-      const { status } = await Notifications.requestPermissionsAsync();
-      return status === 'granted';
-    } catch (e) {
-      console.log('Notifications not available (expo-notifications not installed):', e);
-      return false;
-    }
+export const subscribeToPushNotifications = async (character: string = 'sora') => {
+  if (Platform.OS !== 'web') {
+    // Currently only supporting Web Push in this implementation
+    return null;
   }
 
-  static async scheduleNotification(
-    title: string,
-    body: string,
-    date: Date
-  ): Promise<void> {
-    console.log(`📱 Scheduling notification: ${title} - ${body}`);
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    console.warn('[Push] Browser does not support Push Notifications');
+    return null;
+  }
 
-    try {
-      // @ts-ignore
-      const { Notifications } = await (import('expo-notifications') as any);
+  try {
+    // Request permission first
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      console.log('Notification permission not granted');
+      return null;
+    }
 
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title,
-          body,
-          sound: true,
-          priority: Notifications.AndroidNotificationPriority.HIGH,
-        },
-        trigger: {
-          date,
-        },
+    // Register/Get Service Worker
+    const registration = await navigator.serviceWorker.ready;
+
+    // Check existing subscription
+    let subscription = await registration.pushManager.getSubscription();
+    
+    // VAPID keys provided via environment variables (Vite/Expo web)
+    const publicKey = process.env.EXPO_PUBLIC_VAPID_PUBLIC_KEY;
+    if (!publicKey) {
+      throw new Error('EXPO_PUBLIC_VAPID_PUBLIC_KEY is not defined');
+    }
+
+    // Create new subscription if needed
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey)
       });
-    } catch (e) {
-      console.log('Notification scheduling not available:', e);
+      console.log('Created new Push Subscription');
+    } else {
+      console.log('Found existing Push Subscription');
     }
+
+    // Send the subscription and current active character context to our Vercel API
+    await sendSubscriptionToServer(subscription, character);
+    return subscription;
+  } catch (error) {
+    console.error('Subscription failed:', error);
+    return null;
   }
+};
 
-  static async sendImmediateNotification(title: string, body: string): Promise<void> {
-    console.log(`📱 Sending immediate notification: ${title} - ${body}`);
+const sendSubscriptionToServer = async (subscription: PushSubscription, character: string) => {
+  try {
+    // Calling the Vercel API endpoint we created
+    const response = await fetch('/api/push-subscription', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        subscription: subscription.toJSON(),
+        character: character
+      }),
+    });
 
-    try {
-      // @ts-ignore
-      const { Notifications } = await (import('expo-notifications') as any);
-
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title,
-          body,
-          sound: true,
-        },
-        trigger: null,
-      });
-    } catch (e) {
-      console.log('Immediate notification not available:', e);
+    if (!response.ok) {
+        const err = await response.json();
+        throw new Error(`Server error: ${err.error || response.statusText}`);
     }
+    
+    console.log('Successfully saved push subscription on server');
+  } catch (error) {
+    console.error('Failed to send subscription to server:', error);
   }
-
-  static async sendCatMessage(): Promise<void> {
-    const message = this.catMessages[Math.floor(Math.random() * this.catMessages.length)];
-    console.log(`🐱 Cat message: ${message}`);
-
-    await this.sendImmediateNotification('部長からのメッセージ', message);
-  }
-
-  static async scheduleDailyReminder(hour: number = 21, minute: number = 0): Promise<void> {
-    try {
-      // @ts-ignore
-      const { Notifications } = await (import('expo-notifications') as any);
-
-      await Notifications.cancelAllScheduledNotificationsAsync();
-
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: '気づきの庭',
-          body: '今日の気づき、綴りましたか？',
-          sound: true,
-        },
-        trigger: {
-          hour,
-          minute,
-          repeats: true,
-        },
-      });
-
-      console.log(`📅 Daily reminder scheduled for ${hour}:${minute}`);
-    } catch (e) {
-      console.log('Daily reminder scheduling not available:', e);
-    }
-  }
-
-  static async cancelAllNotifications(): Promise<void> {
-    try {
-      // @ts-ignore
-      const { Notifications } = await import('expo-notifications');
-      await Notifications.cancelAllScheduledNotificationsAsync();
-      console.log('📅 All notifications cancelled');
-    } catch (e) {
-      console.log('Notification cancellation not available:', e);
-    }
-  }
-
-  static getRules(): NotificationRule[] {
-    return [...this.rules];
-  }
-
-  static updateRule(id: string, enabled: boolean): void {
-    const rule = this.rules.find(r => r.id === id);
-    if (rule) {
-      rule.enabled = enabled;
-    }
-  }
-
-  static async checkStreak(streakDays: number): Promise<void> {
-    for (const rule of this.rules) {
-      if (rule.type === 'streak' && rule.enabled) {
-        if (streakDays >= rule.condition.days) {
-          await this.sendImmediateNotification(
-            '連続記録達成！',
-            rule.message
-          );
-          // 一度だけ送るために無効化
-          rule.enabled = false;
-        }
-      }
-    }
-  }
-}
+};

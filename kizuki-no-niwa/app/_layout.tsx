@@ -6,6 +6,8 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider } from '../components/AuthProvider';
+import { Platform } from 'react-native';
+import { useEffect } from 'react';
 
 import { ErrorBoundary } from 'react-error-boundary';
 import { View, Text, ScrollView } from 'react-native';
@@ -23,6 +25,15 @@ function ErrorFallback({ error }: { error: any }) {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+
+  useEffect(() => {
+    if (Platform.OS === 'web' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then((reg) => console.log('Service Worker registered', reg))
+        .catch((err) => console.error('Service Worker registration failed', err));
+    }
+  }, []);
 
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
