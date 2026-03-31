@@ -10,6 +10,7 @@ import { supabase } from '../lib/supabase';
 import { Database } from '../types/supabase';
 import { ForeshadowingList } from '../components/ForeshadowingList';
 import { PWAGuide } from '../components/PWAGuide';
+import { subscribeToPushNotifications } from '../lib/notificationService';
 
 type Story = Database['public']['Tables']['stories']['Row'];
 
@@ -126,9 +127,20 @@ export default function HomeScreen() {
                                     title="ソラと話す"
                                     variant="secondary"
                                     onPress={() => router.push({ pathname: '/dialogue/[id]', params: { id: 'sora' } })}
-                                    className="w-full max-w-xs border-indigo-200 bg-indigo-50/30"
+                                    className="w-full max-w-xs border-indigo-200 bg-indigo-50/30 mb-4"
                                 />
                             )}
+                            
+                            <IsakaButton
+                                title="通知を許可する"
+                                variant="secondary"
+                                onPress={async () => {
+                                    const sub = await subscribeToPushNotifications(currentPhase >= 2 ? 'sora' : 'haru');
+                                    if(sub) alert('通知設定をオンにしました。\n(Vercelデプロイ後に動作します)');
+                                    else alert('通知設定に失敗しました。\n(ブラウザ設定を確認してください)');
+                                }}
+                                className="w-full max-w-xs border-stone/30"
+                            />
                         </View>
 
                         <ForeshadowingList />
