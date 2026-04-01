@@ -49,3 +49,8 @@ Join our community of developers creating universal apps.
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
 # Trigger Vercel deployment
+
+## AI Update (2026-04-01)
+- **Engine Upgrade**: Migrated to **Gemini 3.1 Flash** (Preview) for better reasoning and faster stories.
+- **Security**: Moved AI chat interactions to a server-side **Vercel API Route** (`/api/generate-reply`). The API key is no longer exposed to the client.
+- **Reliability**: Implemented `responseSchema` for structured output validation to prevent parsing errors.

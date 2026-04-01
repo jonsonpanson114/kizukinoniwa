@@ -6,7 +6,7 @@ import fs from 'fs';
 config({ path: path.join(__dirname, '..', '.env') });
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.EXPO_PUBLIC_GEMINI_API_KEY;
-const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_MODEL = 'gemini-3.1-flash';
 
 if (!GEMINI_API_KEY) {
     console.error("❌ GEMINI_API_KEY is not set in .env");
@@ -108,8 +108,7 @@ ${foreshadowingText}
 }
 
 async function runTest() {
-    console.log("🧪 Starting Local Test for Gemini 2.5 Flash Generation...");
-    console.log("🧪 Starting Local Test for Gemini 2.5 Flash Generation...");
+    console.log("🧪 Starting Local Test for Gemini 3.1 Flash Generation...");
     // console.log("🔑 API Key found: " + (GEMINI_API_KEY ? "Present" : "Missing")); // Do not log the key itself
 
     const mockPhase = 1;
@@ -135,6 +134,25 @@ async function runTest() {
                     temperature: 0.9,
                     maxOutputTokens: 4096,
                     responseMimeType: 'application/json',
+                    responseSchema: {
+                        type: 'object',
+                        properties: {
+                            story_text: { type: 'string' },
+                            summary_for_next: { type: 'string' },
+                            mood_tags: { type: 'array', items: { type: 'string' } },
+                            character: { type: 'string', enum: ['haru', 'sora'] },
+                            new_foreshadowing: { type: 'string', nullable: true },
+                            resolved_foreshadowing_id: { type: 'string', nullable: true }
+                        },
+                        required: [
+                            'story_text',
+                            'summary_for_next',
+                            'mood_tags',
+                            'character',
+                            'new_foreshadowing',
+                            'resolved_foreshadowing_id'
+                        ]
+                    }
                 },
             }),
         });

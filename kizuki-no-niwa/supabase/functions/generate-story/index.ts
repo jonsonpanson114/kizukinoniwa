@@ -6,7 +6,7 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_MODEL = 'gemini-3.1-flash';
 
 const getSystemPrompt = (phase: number) => `あなたは「伊坂幸太郎」の作風を徹底的に研究したAI作家です。
 以下の全ルールを完全に守って執筆してください。絶対に「ほのぼのした日常」では終わらせず、何らかの「事件性」や「不穏な影」を感じさせてください。
@@ -244,6 +244,25 @@ serve(async (req) => {
                     temperature: 0.9,
                     maxOutputTokens: 4096,
                     responseMimeType: 'application/json',
+                    responseSchema: {
+                        type: 'object',
+                        properties: {
+                            story_text: { type: 'string' },
+                            summary_for_next: { type: 'string' },
+                            mood_tags: { type: 'array', items: { type: 'string' } },
+                            character: { type: 'string', enum: ['haru', 'sora'] },
+                            new_foreshadowing: { type: 'string', nullable: true },
+                            resolved_foreshadowing_id: { type: 'string', nullable: true }
+                        },
+                        required: [
+                            'story_text',
+                            'summary_for_next',
+                            'mood_tags',
+                            'character',
+                            'new_foreshadowing',
+                            'resolved_foreshadowing_id'
+                        ]
+                    }
                 },
             }),
         });

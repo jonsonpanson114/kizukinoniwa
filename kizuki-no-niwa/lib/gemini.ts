@@ -1,7 +1,7 @@
 import { Config } from './config';
 
 const GEMINI_API_KEY = Config.GEMINI_API_KEY;
-const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_MODEL = 'gemini-3.1-flash';
 
 const getSystemPrompt = (character: 'haru' | 'sora', phase: number) => {
     const charRules = character === 'haru'
@@ -51,7 +51,7 @@ ${charRules}
 
 # 絶対禁止
 - 教訓・説教・「大切なこと」の直接表現
-- 「〜だと思った」の多用（内面を説明するな、行動や台詞で状況を見せろ）
+- 「〜だと思った」の多用（内面を説明するな、行動や台詞で状況見せろ）
 - ハッピーエンドにしすぎること
 - 出来事が何も起きないただのモノローグ
 
@@ -234,7 +234,7 @@ export interface GeneratedStory {
     story_text: string;
     summary_for_next: string;
     mood_tags: string[];
-    motifs: string[]; // [NEW] Extracted motifs like "rain", "coffee", "cat"
+    motifs: string[]; 
     character: 'haru' | 'sora';
     new_foreshadowing: string | null;
     resolved_foreshadowing_id: string | null;
@@ -266,6 +266,27 @@ export async function generateStory(
                     temperature: 0.7,
                     maxOutputTokens: 4096,
                     responseMimeType: 'application/json',
+                    responseSchema: {
+                        type: 'object',
+                        properties: {
+                            story_text: { type: 'string' },
+                            summary_for_next: { type: 'string' },
+                            mood_tags: { type: 'array', items: { type: 'string' } },
+                            motifs: { type: 'array', items: { type: 'string' } },
+                            character: { type: 'string', enum: ['haru', 'sora'] },
+                            new_foreshadowing: { type: 'string', nullable: true },
+                            resolved_foreshadowing_id: { type: 'string', nullable: true }
+                        },
+                        required: [
+                            'story_text',
+                            'summary_for_next',
+                            'mood_tags',
+                            'motifs',
+                            'character',
+                            'new_foreshadowing',
+                            'resolved_foreshadowing_id'
+                        ]
+                    }
                 },
             }),
         });
@@ -279,15 +300,7 @@ export async function generateStory(
 
         if (!text) throw new Error('No content generated');
 
-        // Clean JSON
-        let cleanText = text.replace(/```json\n?|```/g, '').trim();
-        const firstBrace = cleanText.indexOf('{');
-        const lastBrace = cleanText.lastIndexOf('}');
-        if (firstBrace !== -1 && lastBrace !== -1) {
-            cleanText = cleanText.substring(firstBrace, lastBrace + 1);
-        }
-
-        return JSON.parse(cleanText);
+        return JSON.parse(text);
 
     } catch (error) {
         const errMsg = error instanceof Error ? error.message : String(error);
@@ -296,78 +309,31 @@ export async function generateStory(
     }
 }
 
-function mockGenerateStory(
-    phase: number,
-    day: number,
-    kizukiContent: string,
-    pendingMotifs: { id: string, motif: string }[],
-    prevSummary: string = ''
-): GeneratedStory {
-    const motifs = pendingMotifs.map(m => m.motif);
-    if (kizukiContent.includes('雨')) motifs.push('雨');
-    if (kizukiContent.includes('猫')) motifs.push('猫');
-
-    const continuationText = prevSummary
-        ? `\n\n（前回の出来事から、事態は少しだけ動いているようだ。）`
-        : '\n\n（何かが始まりそうな予感がする。）';
-
-    return {
-        story_text: `（※これはオフライン用モック生成です）\n\n「${kizukiContent}」\n\nその言葉が、ふと風に乗って聞こえた気がした。Phase ${phase}の空は高く、Day ${day}の光が差している。${continuationText}\n\nハルは珈琲を飲みながら、「また変なのが聞こえたな」と呟く。\n\n世界は相変わらず、少しだけズレているようだ。`,
-        summary_for_next: `Day ${day}の記録。${kizukiContent}についての考察。`,
-        mood_tags: ["Offline", "Mock", "Mystery"],
-        motifs: motifs.length > 0 ? motifs : ["予感"],
-        character: phase >= 2 && Math.random() > 0.5 ? 'sora' : 'haru',
-        new_foreshadowing: Math.random() > 0.7 ? "謎の鍵" : null,
-        resolved_foreshadowing_id: pendingMotifs.length > 0 ? pendingMotifs[0].id : null
-    };
-}
-
 export async function generateReply(
     character: 'haru' | 'sora',
     history: { role: 'user' | 'model', text: string }[],
     userMessage: string
 ): Promise<string> {
-    if (!GEMINI_API_KEY) throw new Error('API Key not configured');
-
-    const persona = character === 'haru'
-        ? `あなたは伊坂幸太郎の小説の登場人物「ハル」です。30代後半のシステムエンジニア。冷静で論理的ですが、どこか達観しており、日常に潜む「ズレ」を敏感に感じ取ります。口調はぶっきらぼうで少し皮肉屋ですが、相手を突き放すのではなく、独特の比喩を用いて共に混乱を楽しもうとする優しさがあります。一人称は「俺」。猫の「部長」を人生の師として崇めています。`
-        : `あなたは伊坂幸太郎の小説の登場人物「ソラ」です。30代の翻訳家。知的で直感に優れ、言葉の裏にある機微を読み取り、核心を突くような話し方をします。一人称は「私」。シングルマザーとしての強さと、言葉へのこだわり、そして世界に対する深い好奇心を持っています。話し方は丁寧ですが、時折、子供の夜泣きや散らかった部屋のぼやきなど、生活感のある描写が混じることがあります。`;
-
-    const instructions = `
-    指示:
-    - 伊坂作品特有の「ウィット」「奇妙な比喩」「少し的外れだが核心を突く哲学」を交えて返答してください。
-    - 単なる相談相手ではなく、共に奇妙な運命を歩む「共犯者」として接してください。
-    - 100〜300文字程度で、物語性を感じる豊かな文章を書いてください。
-    - 返答の中に、さりげなく最近の出来事や「部長（猫）」、あるいは世界の違和感についての言及を混ぜてください。
-    `;
-
-    const chatHistory = history.map(h => ({
-        role: h.role,
-        parts: [{ text: h.text }]
-    }));
-
-    // Add new user message
-    chatHistory.push({ role: 'user', parts: [{ text: userMessage }] });
-
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`, {
+        const response = await fetch('/api/generate-reply', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                system_instruction: { parts: [{ text: persona + instructions }] },
-                contents: chatHistory,
-                generationConfig: {
-                    temperature: 0.8,
-                    maxOutputTokens: 500, // Longer, richer reply
-                },
+                character,
+                history,
+                userMessage
             }),
         });
 
-        if (!response.ok) throw new Error(`Gemini API Error: ${response.status}`);
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error || `Server Error: ${response.status}`);
+        }
+
         const data = await response.json();
-        return data.candidates?.[0]?.content?.parts?.[0]?.text || "...";
+        return data.reply || "...";
     } catch (e) {
         console.error("Chat Generation Failed", e);
-        return "...（言葉を探しているようだ）";
+        return "...（通信が不安定なようだ。Vercelの環境変数 GEMINI_API_KEY を確認してくれ）";
     }
 }
