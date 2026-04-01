@@ -41,7 +41,7 @@
 - **ロジック:** Supabase Edge Functions (Deno/TypeScript)
 
 ### AIコア
-- **モデル:** Google Gemini 2.5 Flash (Supabase Edge Functionsまたはクライアント直接呼び出し)
+- **モデル:** Google Gemini 3.1 Flash (Vercel Serverless Functions または Supabase Edge Functions)
 - **役割:** 物語生成、感情分析、伏線管理。
 
 ---
@@ -136,7 +136,7 @@ create policy "Users can only access their own dialogues" on dialogues for all u
 2.  **フェーズ判定:** 以下の基準で自動遷移を判定する。
     *   **Phase 1 -> 2:** 気づきの蓄積20日以上 ＆ 自己認識の深まり。
     *   **Phase 2 -> 3:** 因果の連鎖の発生回数。
-3.  **Gemini 2.5 Flash へのプロンプト構築:**
+3.  **Gemini 3.1 Flash へのプロンプト構築:**
     *   **ペルソナ:** 「伊坂幸太郎に似た作風の小説家（ウィットに富み、少しシニカルだが温かみがあり、伏線が絡み合う）。」
     *   **キャラクター:**
         *   **ハル (Haru):** 30代男性。会社員。猫に話しかける癖がある。ややシニカル。
