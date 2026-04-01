@@ -4,6 +4,9 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
 ## Get started
 
+
+<!-- deploy trigger after disabling verified commits -->
+
 1. Install dependencies
 
    ```bash
