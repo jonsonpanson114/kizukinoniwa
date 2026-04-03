@@ -1,22 +1,15 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-
 const GEMINI_MODEL = 'gemini-3.1-flash';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+module.exports = async function (req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
     const { character, history, userMessage } = req.body;
-
-    if (!character || !userMessage) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
-
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.EXPO_PUBLIC_GEMINI_API_KEY;
 
     if (!GEMINI_API_KEY) {
-        return res.status(500).json({ error: 'Gemini API Key not configured on server' });
+        return res.status(500).json({ error: 'Gemini API Key missing in Vercel' });
     }
 
     const persona = character === 'haru'
@@ -31,7 +24,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     - 返答の中に、さりげなく最近の出来事や「部長（猫）」、あるいは世界の違和感についての言及を混ぜてください。
     `;
 
-    const chatHistory = (history || []).map((h: any) => ({
+    const chatHistory = (history || []).map((h) => ({
         role: h.role,
         parts: [{ text: h.text }]
     }));
@@ -54,15 +47,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         if (!response.ok) {
             const err = await response.text();
-            throw new Error(`Gemini API Error: ${response.status} - ${err}`);
+            throw new Error(`Gemini API: ${response.status} - ${err}`);
         }
 
         const data = await response.json();
         const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "...";
-
-        return res.status(200).json({ reply });
+        res.status(200).json({ reply });
     } catch (e) {
-        console.error("Chat Generation Failed", e);
-        return res.status(500).json({ error: 'Failed to generate reply' });
+        console.error(e);
+        res.status(500).json({ error: e.message });
     }
-}
+};

@@ -25,7 +25,8 @@ const getEnv = (key: string, value: string | undefined): string => {
 // EXPO_PUBLIC_ variables must be accessed statically for inlining to work.
 // Do not use process.env[key] for these.
 export const Config: AppConfig = {
-    GEMINI_API_KEY: getEnv('EXPO_PUBLIC_GEMINI_API_KEY', process.env.EXPO_PUBLIC_GEMINI_API_KEY),
+    // No longer strictly required on client-side as we use backend APIs.
+    GEMINI_API_KEY: process.env.EXPO_PUBLIC_GEMINI_API_KEY || '',
     SUPABASE_URL: getEnv('EXPO_PUBLIC_SUPABASE_URL', process.env.EXPO_PUBLIC_SUPABASE_URL),
     SUPABASE_ANON_KEY: getEnv('EXPO_PUBLIC_SUPABASE_ANON_KEY', process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY),
     IS_PROD: process.env.NODE_ENV === 'production',
