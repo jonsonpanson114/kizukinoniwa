@@ -26,7 +26,7 @@ export interface NotificationSettings {
   permissionRequested: boolean;
 }
 
-export const subscribeToPushNotifications = async (settings?: NotificationSettings, character: string = 'sora') => {
+export const subscribeToPushNotifications = async (character: string = 'sora', settings?: NotificationSettings) => {
   if (Platform.OS !== 'web') {
     return null;
   }
@@ -57,7 +57,7 @@ export const subscribeToPushNotifications = async (settings?: NotificationSettin
       });
     }
 
-    await sendSubscriptionToServer(subscription, settings, character);
+    await sendSubscriptionToServer(subscription, character, settings);
     return subscription;
   } catch (error) {
     console.error('Subscription failed:', error);
@@ -65,22 +65,24 @@ export const subscribeToPushNotifications = async (settings?: NotificationSettin
   }
 };
 
-const sendSubscriptionToServer = async (subscription: PushSubscription, settings?: NotificationSettings, character: string = 'sora') => {
+const sendSubscriptionToServer = async (subscription: PushSubscription, character: string = 'sora', settings?: NotificationSettings) => {
   try {
+    const settingsPayload = (settings && typeof settings === 'object' && settings.morning) ? {
+      morningHour: settings.morning.hour,
+      morningMinute: settings.morning.minute,
+      morningEnabled: settings.morning.enabled,
+      eveningHour: settings.evening.hour,
+      eveningMinute: settings.evening.minute,
+      eveningEnabled: settings.evening.enabled,
+    } : undefined;
+
     const response = await fetch('/api/push-subscription', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         subscription: subscription.toJSON(),
         character: character,
-        settings: settings ? {
-          morningHour: settings.morning.hour,
-          morningMinute: settings.morning.minute,
-          morningEnabled: settings.morning.enabled,
-          eveningHour: settings.evening.hour,
-          eveningMinute: settings.evening.minute,
-          eveningEnabled: settings.evening.enabled,
-        } : undefined
+        settings: settingsPayload
       }),
     });
 
@@ -89,5 +91,6 @@ const sendSubscriptionToServer = async (subscription: PushSubscription, settings
     }
   } catch (error) {
     console.error('Failed to send subscription to server:', error);
+    throw error; // Rethrow to let caller catch it
   }
 };
