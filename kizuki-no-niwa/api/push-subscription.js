@@ -35,8 +35,8 @@ module.exports = async function (req, res) {
         app_name: 'kizuki-no-niwa',
         action: 'subscribe',
         subscription: JSON.stringify(subscription),
-        settings: settings,
         character: character || 'sora',
+        settings: settings || {}
       }),
     });
 

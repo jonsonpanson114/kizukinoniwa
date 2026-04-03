@@ -26,7 +26,14 @@ export interface NotificationSettings {
   permissionRequested: boolean;
 }
 
-export const subscribeToPushNotifications = async (character: string = 'sora', settings?: NotificationSettings) => {
+const DEFAULT_SETTINGS: NotificationSettings = {
+  enabled: true,
+  morning: { enabled: true, hour: 8, minute: 0 },
+  evening: { enabled: true, hour: 22, minute: 0 },
+  permissionRequested: true
+};
+
+export const subscribeToPushNotifications = async (character: string = 'sora', settings: NotificationSettings = DEFAULT_SETTINGS) => {
   if (Platform.OS !== 'web') {
     return null;
   }

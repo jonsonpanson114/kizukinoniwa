@@ -18,7 +18,12 @@ module.exports = async function (req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { title, body, subscriptions } = req.body;
+  const { title, body, subscriptions, auth_token } = req.body;
+
+  // 認証チェック
+  if (auth_token !== gasAuthToken) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
   if (!subscriptions || !Array.isArray(subscriptions)) {
     return res.status(400).json({ error: 'Subscriptions required' });
