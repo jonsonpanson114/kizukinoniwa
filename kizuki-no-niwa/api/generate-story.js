@@ -6,7 +6,7 @@ const getSystemPrompt = (character, phase) => {
 2. **システムエンジニア的な比喩** — 効率、バグ、論理、あるいは構造に対する dry な視点。`
         : `1. **「現実は、翻訳できないことばかりだ」** — ソラはこの口癖や、言葉の裏側にある「翻訳不能な重なり」についての哲学を語る。
 2. **翻訳家的な比喩** — 語源、文脈、ニュアンス、行間、あるいは「言葉の限界」に対する知的な視点。
-3. **シングルマザーの現実** — 緊迫した場面でも、子供の宿題や朝食のことがふと頭をよぎるような、学に根ざした強かさ。`;
+3. **シングルマザーの現実** — 緊迫した場面でも、子供の宿題や朝食のことがふと頭をよぎるような、生活に根ざした強かさ。`;
 
     return `あなたは「伊坂幸太郎」の作風を徹底的に研究したAI作家です。
 以下の全ルールを完全に守って執筆してください。絶対に「ほのぼのした日常」では終わらせず、何らかの「事件性」や「不穏な影」を感じさせてください。
@@ -19,7 +19,7 @@ const getSystemPrompt = (character, phase) => {
 1. **台詞から始めるか、劇的な状況描写から始める** — 平凡な地の文で説明から入るな。
 2. **比喩は必ず具体で唐突で奇妙** — 「悲しかった」ではなく「賞味期限が三日切れた牛乳を飲む時のような決意で」
 3. **キャラクター固有の視点**:
-\${charRules}
+${charRules}
 4. **テンポ** — 長い段落は書かない。1〜3文で改行する。
 
 # 部長（猫）の扱い（最重要）
@@ -36,7 +36,7 @@ const getSystemPrompt = (character, phase) => {
 - **これは連作小説です。毎回のエピソードは前回から続く物語です。**
 - **前回のあらすじを踏まえ、そこから物語を進めてください。**
 
-# フェーズ進行 (現在は Phase \${phase} です)
+# フェーズ進行 (現在は Phase ${phase} です)
 - **土 (Phase 1)**: ハルの一人称。
 - **根 (Phase 2)**: ソラが登場。
 - **芽 (Phase 3)**: 伏線が一つ解け、別の巨大な謎が立ち上がる。
@@ -61,15 +61,15 @@ const getDailyGuideline = (day) => {
 function buildUserPrompt(character, phase, day, kizukiContent, pendingMotifs, prevSummary) {
     const phaseName = ['', '土', '根', '芽', '花'][phase] || '土';
     const motifInstruction = (pendingMotifs || []).length > 0
-        ? pendingMotifs.map(m => `- \${m.motif} (ID: \${m.id})`).join('\n')
+        ? pendingMotifs.map(m => `- ${m.motif} (ID: ${m.id})`).join('\n')
         : 'なし';
     const dailyGuideline = getDailyGuideline(day);
-    return `現在: \${phaseName}フェーズ (Phase \${phase}), Day \${day}
-\${dailyGuideline}
-ユーザーの今日の気づき: "\${kizukiContent}"
-前回のあらすじ: \${prevSummary || '（これが最初のエピソードです）'}
-未回収の伏線: \${motifInstruction}
-キャラクター: \${character === 'haru' ? 'ハル' : 'ソラ'}
+    return `現在: ${phaseName}フェーズ (Phase ${phase}), Day ${day}
+${dailyGuideline}
+ユーザーの今日の気づき: "${kizukiContent}"
+前回のあらすじ: ${prevSummary || '（これが最初のエピソードです）'}
+未回収の伏線: ${motifInstruction}
+キャラクター: ${character === 'haru' ? 'ハル' : 'ソラ'}
 400〜800文字の短編をJSON形式で。`;
 }
 
@@ -90,7 +90,7 @@ module.exports = async function (req, res) {
     const userPrompt = buildUserPrompt(character, phase, day, kizukiContent, pendingMotifs, prevSummary);
 
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/\${GEMINI_MODEL}:generateContent?key=\${GEMINI_API_KEY}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -118,7 +118,8 @@ module.exports = async function (req, res) {
         });
 
         if (!response.ok) {
-            return res.status(500).json({ error: await response.text() });
+            const errBody = await response.text();
+            return res.status(500).json({ error: errBody });
         }
 
         const data = await response.json();
