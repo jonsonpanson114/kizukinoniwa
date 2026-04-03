@@ -1,7 +1,7 @@
 import { Config } from './config';
 
 const GEMINI_API_KEY = Config.GEMINI_API_KEY;
-const GEMINI_MODEL = 'gemini-3.1-flash';
+const GEMINI_MODEL = 'gemini-1.5-flash';
 
 const getSystemPrompt = (character: 'haru' | 'sora', phase: number) => {
     const charRules = character === 'haru'

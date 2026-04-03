@@ -1,4 +1,4 @@
-const GEMINI_MODEL = 'gemini-3.1-flash';
+const GEMINI_MODEL = 'gemini-1.5-flash';
 
 const getSystemPrompt = (character, phase) => {
     const charRules = character === 'haru'
