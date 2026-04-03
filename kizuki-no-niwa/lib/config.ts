@@ -15,8 +15,8 @@ interface AppConfig {
 
 const getEnv = (key: string, value: string | undefined): string => {
     if (!value) {
-        const error = `[SECURITY ERROR] Required environment variable "${key}" is missing. Check your .env file or Vercel settings.`;
-        console.error(error);
+        // Reduced severity to prevent app crashing on boot in Vercel
+        console.warn(`[CONFIG WARNING] Optional/Missing environment variable: "${key}"`);
         return '';
     }
     return value;

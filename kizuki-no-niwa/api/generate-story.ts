@@ -1,6 +1,6 @@
-import { Config } from './config';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const GEMINI_API_KEY = Config.GEMINI_API_KEY;
+// Gemini Model Configuration
 const GEMINI_MODEL = 'gemini-3.1-flash';
 
 const getSystemPrompt = (character: 'haru' | 'sora', phase: number) => {
@@ -83,7 +83,7 @@ const getDailyGuideline = (day: number): string => {
 
         `【今日の焦点：警告】
 ユーザーの気づきを、誰かからの「警告」として扱ってください。
-部長（猫）が不自然に鳴いた。ラジオのニュースが気になる。
+部長（猫）が不自然に鳴いた。ラジオのニュースが気になる.
 「近づかない方がいい」と誰かが囁いているような空気。`,
 
         `【今日の焦点：共犯者】
@@ -103,7 +103,7 @@ const getDailyGuideline = (day: number): string => {
 
         `【今日の焦点：記憶の改竄】
 ユーザーの気づきを、思い出が少しずつ「書き換わっている」感覚として扱ってください。
-昨日はこうだったはず。でも、記憶が違う。
+昨日はこうだったはず。でも、記憶が違う.
 誰かが、私の記憶の中を何か書き換えているのかもしれない。`,
 
         `【今日の焦点：予兆】
@@ -122,8 +122,8 @@ const getDailyGuideline = (day: number): string => {
 部屋の中に、もう一人の誰かがいるような気配。`,
 
         `【今日の焦点：反復】
-ユーザーの気づきを、過去の出来事が「繰り返されている」として扱ってください。
-似たようなことが、また起こった。でも、少し違う。
+ユーザーの気づきを、過去の出来目が「繰り返されている」として扱ってください。
+似たようなことが、また起こった。でも、少し違う.
 誰かが、同じシナリオを何度も上演している。`,
 
         `【今日の焦点：観察者】
@@ -224,81 +224,69 @@ ${persona}
   "summary_for_next": "次回への引き継ぎ要約（100文字以内）",
   "mood_tags": ["タグ1", "タグ2"],
   "motifs": ["キーワード1", "キーワード2"],
-  "character": "${character}",
+  "character": "\${character}",
   "new_foreshadowing": null または "伏線モチーフの文字列",
   "resolved_foreshadowing_id": null または "伏線のuuid" (今回回収した伏線があれば)
 }`;
 }
 
-export interface GeneratedStory {
-    story_text: string;
-    summary_for_next: string;
-    mood_tags: string[];
-    motifs: string[]; 
-    character: 'haru' | 'sora';
-    new_foreshadowing: string | null;
-    resolved_foreshadowing_id: string | null;
-}
-
-export async function generateStory(
-    phase: number,
-    day: number,
-    kizukiContent: string,
-    pendingMotifs: { id: string, motif: string }[] = [],
-    prevSummary: string = ''
-): Promise<GeneratedStory> {
-    try {
-        const response = await fetch('/api/generate-story', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                phase,
-                day,
-                kizukiContent,
-                pendingMotifs,
-                prevSummary
-            }),
-        });
-
-        if (!response.ok) {
-            const errData = await response.json().catch(() => ({}));
-            throw new Error(errData.error || `Server Error: ${response.status}`);
-        }
-
-        return await response.json();
-
-    } catch (error) {
-        const errMsg = error instanceof Error ? error.message : String(error);
-        console.error('Story Generation failed:', errMsg);
-        throw new Error(`Story Generation failed: ${errMsg}`);
+export default async function handler(req: any, res: any) {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
     }
-}
 
-export async function generateReply(
-    character: 'haru' | 'sora',
-    history: { role: 'user' | 'model', text: string }[],
-    userMessage: string
-): Promise<string> {
+    const { phase, day, kizukiContent, pendingMotifs, prevSummary } = req.body;
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    if (!apiKey) {
+        return res.status(500).json({ error: 'Vercel configuration missing: GEMINI_API_KEY' });
+    }
+
+    const character = phase === 1 ? 'haru' : (phase === 2 ? 'sora' : (Math.random() > 0.5 ? 'haru' : 'sora'));
+    const systemPrompt = getSystemPrompt(character, phase);
+    const userPrompt = buildUserPrompt(character, phase, day, kizukiContent, pendingMotifs, prevSummary);
+
     try {
-        const response = await fetch('/api/generate-reply', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                character,
-                history,
-                userMessage
-            }),
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ 
+            model: GEMINI_MODEL,
+            systemInstruction: systemPrompt
         });
 
-        if (!response.ok) {
-            const errData = await response.json().catch(() => ({}));
-            throw new Error(errData.error || `Server Error: ${response.status}`);
-        }
+        const result = await model.generateContent({
+            contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+            generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 2048,
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: "object" as any,
+                    properties: {
+                        story_text: { type: "string" },
+                        summary_for_next: { type: "string" },
+                        mood_tags: { type: "array", items: { type: "string" } },
+                        motifs: { type: "array", items: { type: "string" } },
+                        character: { type: "string", enum: ["haru", "sora"] },
+                        new_foreshadowing: { type: "string", nullable: true },
+                        resolved_foreshadowing_id: { type: "string", nullable: true }
+                    },
+                    required: [
+                        "story_text",
+                        "summary_for_next",
+                        "mood_tags",
+                        "motifs",
+                        "character",
+                        "new_foreshadowing",
+                        "resolved_foreshadowing_id"
+                    ]
+                }
+            }
+        });
 
-        const data = await response.json();
-        return data.reply || "...";
-    } catch (e) {
-        console.error("Chat Generation Failed", e);
-        return "...（通信が不安定なようだ。Vercelの環境変数 GEMINI_API_KEY を確認してくれ）";
+        const text = result.response.text();
+        return res.status(200).json(JSON.parse(text));
+    } catch (error: any) {
+        console.error('API Generation failed:', error);
+        return res.status(500).json({ error: error.message || 'Internal Server Error' });
     }
 }
