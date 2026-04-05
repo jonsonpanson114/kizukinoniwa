@@ -135,9 +135,14 @@ export default function HomeScreen() {
                                 title="通知を許可する"
                                 variant="secondary"
                                 onPress={async () => {
-                                    const sub = await subscribeToPushNotifications(currentPhase >= 2 ? 'sora' : 'haru');
-                                    if(sub) alert('通知設定をオンにしました。\n(Vercelデプロイ後に動作します)');
-                                    else alert('通知設定に失敗しました。\n(ブラウザ設定を確認してください)');
+                                    const result = await subscribeToPushNotifications(currentPhase >= 2 ? 'sora' : 'haru');
+                                    if (result instanceof Error) {
+                                        alert(`通知設定に失敗しました:\n${result.message}\n(ブラウザ設定や環境変数を確認してください)`);
+                                    } else if (result) {
+                                        alert('通知設定をオンにしました！\n(Vercelデプロイ後に自動的に届きます)');
+                                    } else {
+                                        alert('通知設定がスキップされました。');
+                                    }
                                 }}
                                 className="w-full max-w-xs border-stone/30"
                             />

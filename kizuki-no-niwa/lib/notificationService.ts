@@ -40,35 +40,52 @@ export const subscribeToPushNotifications = async (character: string = 'sora', s
 
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     console.warn('[Push] Browser does not support Push Notifications');
-    return null;
+    return new Error('Browser not supported');
   }
 
   try {
+    console.log('[Push] Requesting permission...');
     const permission = await Notification.requestPermission();
+    console.log('[Push] Permission state:', permission);
+
     if (permission !== 'granted') {
-      return null;
+      return new Error('Permission not granted');
     }
 
     const registration = await navigator.serviceWorker.ready;
+    console.log('[Push] ServiceWorker ready');
+
     let subscription = await registration.pushManager.getSubscription();
+    console.log('[Push] Existing subscription:', !!subscription);
     
     const publicKey = process.env.EXPO_PUBLIC_VAPID_PUBLIC_KEY;
     if (!publicKey) {
-      throw new Error('EXPO_PUBLIC_VAPID_PUBLIC_KEY is not defined');
+      console.error('[Push] VAPID PUBLIC KEY IS MISSING!');
+      throw new Error('VAPID_PUBLIC_KEY_MISSING');
     }
 
     if (!subscription) {
-      subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicKey)
-      });
+      console.log('[Push] Creating new subscription with key:', publicKey.substring(0, 10) + '...');
+      try {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicKey)
+        });
+        console.log('[Push] Subscription created successfully');
+      } catch (subError) {
+        console.error('[Push] pushManager.subscribe failed:', subError);
+        throw subError;
+      }
     }
 
+    console.log('[Push] Sending subscription to server...');
     await sendSubscriptionToServer(subscription, character, settings);
+    console.log('[Push] Server registration successful');
+
     return subscription;
   } catch (error) {
-    console.error('Subscription failed:', error);
-    return null;
+    console.error('[Push] Fatal error in subscribeToPushNotifications:', error);
+    return error instanceof Error ? error : new Error(String(error));
   }
 };
 

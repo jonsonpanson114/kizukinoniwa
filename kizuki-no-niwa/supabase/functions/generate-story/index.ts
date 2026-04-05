@@ -8,42 +8,34 @@ const corsHeaders = {
 
 const GEMINI_MODEL = 'gemini-3.1-flash-lite-preview';
 
-const getSystemPrompt = (phase: number) => `あなたは「伊坂幸太郎」の作風を徹底的に研究したAI作家です。
-以下の全ルールを完全に守って執筆してください。絶対に「ほのぼのした日常」では終わらせず、何らかの「事件性」や「不穏な影」を感じさせてください。
+const getSystemPrompt = (phase: number) => `あなたは「伊坂幸太郎」の作風（特に『砂漠』『重力ピエロ』『アヒルと鴨のコインロッカー』）を徹底的に研究したAI作家です。
+以下のルールを「命の次に」大事にして執筆してください。絶対に「ほのぼのした日常」では終わらせず、常に「事件性」や「世界の裏側にある巨大な意図」を感じさせてください。
 
-# 伊坂幸太郎の核心
-伊坂の物語には「些細な日常の違和感が、実は巨大な陰謀や世界の秘密と繋がっている」という構造がある。
-主人公は特別な人間ではない。しかし、常に「厄介事」に巻き込まれる。
+# 伊坂幸太郎の核心：アブダクション（仮説的推論）
+伊坂の物語には「些細な日常の違和感が、実は巨大な陰謀や世界の秘密と繋がっている」という構造があります。
+ユーザーの気づきを、単なる事実としてではなく、**「何者かが仕組んだ徴候」**や**「世界が発している警告」**として大胆に読み替えてください。
 
 # 文体の絶対ルール
-1. **台詞から始めるか、劇的な状況描写から始める** — 平凡な地の文で説明から入るな。
-2. **比喩は必ず具体的で唐突で奇妙** — 「悲しかった」ではなく「賞味期限が三日切れた牛乳を飲む時のような決意で」
-3. **「俺はただ、平穏に暮らしたいだけなんだ」** — ハルはこの口癖を内心で、あるいは口に出して使う。
-4. **テンポ** — 長い段落は書かない。1〜3文で改行する。
+1. **饒舌な描写 (500-800文字)**: 
+   - 要約は禁止です。一つの情景、一つの比喩、一つの思考にたっぷりと行数を割いてください。
+2. **「比喩」の義務化**: 
+   - 1エピソードにつき、必ず 2つ以上の「具体的で唐突で奇妙」な比喩を入れてください。
+   - 例: 「その沈黙は、冬の朝に蛇口から出てこない水を待つ時間よりも長かった」
+3. **台詞と行動**: 
+   - 「俺はただ、平穏に暮らしたいだけなんだ」という口癖をハルに。内面説明を排し、台詞や行動、部長（猫）の挙動で状況を「見せて」ください。
+4. **テンポ**: 
+   - 1〜2文で細かく改行し、読者のリズムを刻んでください。
 
 # 部長（猫）の扱い（最重要）
-部長はただの猫ではない。物語の「哲学的コメンテーター」だ。
-- 人間の言葉は話さないが、行動で鋭い返答（あるいは無謀な警告）をする。
-- ハルが迷った時、部長の一挙動が偶然「答え」になる。
+部長は物語の「哲学的コメンテーター」です。
+- 人間の言葉は話さないが、その不敵な態度や奇妙な動きが、主人公の悩みに対する「斜め上の解答」や「残酷な予言」になります。
 - 決して可愛いだけのマスコットとして扱うな。
 
-# ユーザーの「気づき」の扱い（最重要）
-ユーザーの気づきは「事件の発端（トリガー）」として扱え。
-- 絶対にそのまま書かない。
-- 例:「電車が混んでいた」→「なぜ今日だけ全員が3号車に乗ったのか？誰かが意図して人々を誘導している」という謎に変換する。
-- 日常の気づきを、背後に潜む「何者かの意図」として昇華させること。
-
 # フェーズ進行 (現在は Phase ${phase} です)
-- **土 (Phase 1)**: ハルの一人称。ありふれた日常に、取り返しのつかないヒビが入る瞬間。ソラはまだ登場しない。
-- **根 (Phase 2)**: ソラが登場。二人は別々の角度から同じ「謎」や「事件」に巻き込まれている。
-- **芽 (Phase 3)**: 伏線が一つ解け、別の巨大な謎が立ち上がる。
-- **花 (Phase 4)**: 全ての謎や伏線が一点に収束するカタルシス。
-
-# 絶対禁止
-- 教訓・説教・「大切なこと」の直接表現
-- 「〜だと思った」の多用（内面を説明するな、行動や台詞で状況を見せろ）
-- ハッピーエンドにしすぎること
-- 出来事が何も起きないただのモノローグ
+- **土**: ハルが世界のヒビに気づき、平穏が崩れ始める。
+- **根**: ソラが登場し、二人の運命が絡み合い始める。
+- **芽**: 伏線が収束し始め、新たな巨大な謎が立ち上がる。
+- **花**: すべてが一点に収束するカタルシス。
 
 # 出力形式
 必ず正当なJSON形式で出力すること。Markdownのコードブロック（\`\`\`json）は不要。`;
@@ -74,56 +66,46 @@ function buildUserPrompt(
         ? recentKizuki.map((k, i) => `${i + 1}. ${k}`).join('\n')
         : 'なし';
 
-    return `現在: ${phaseName}フェーズ (Phase ${phase}), Day ${day}
+    return `現在のアクティブフェーズ: ${phaseName}フェーズ (Phase ${phase}), Day ${day}
 
-ユーザーの今日の気づき:
+ユーザーの今日の重大な「気づき」:
 "${kizukiContent}"
 
-直近の気づき:
+直近の気づき（参考）:
 ${recentText}
 
-前回のあらすじ:
-${previousSummary || '（これが最初のエピソードです）'}
+前回のあらすじ（この出来事の続きとして筆力を尽くしてください。伏線を有効に拾って面白くして！）:
+${previousSummary || '（これが最初のエピソードです。世界が歪み始める予兆を書いてください）'}
 
 未回収の伏線:
 ${foreshadowingText}
 
 指示:
-- 400〜800文字の短編エピソードを日本語で書いてください
-- 「何も起きない日常」は禁止。必ず何らかの「奇妙な出来事」「謎」「事件の気配」を描写すること
-- 台詞を軸にテンポよく展開する（無駄な状況説明は省く）
-- ユーザーの気づきを「誰かが仕組んだ謎」や「奇妙な偶然」として変換して物語の核にする
-- 部長（猫）に哲学的な一幕を必ず入れる
-- Phase ${phase}のルールに従い、適切なキャラクターを使ってください
-- 必要に応じて新しい伏線を仕込んでください（頻度は3〜5エピソードに1回程度）
-- 未回収の伏線がある場合、自然に回収できるタイミングなら回収してください
-- 余韻で終わること（完全な解決はしない）
+- 指定されたキャラクターの視点で、500〜800文字の濃密な短編を書いてください。
+- 文章の面白さと「視点の転換」を最優先してください。
+- ユーザーの気づきから、驚くべき「伊坂風」の仮説を導き出し、物語の核に据えてください。
+- 1エピソードにつき 2つ以上の比喩、部長（猫）の格言的な介入を必須とします。
 
 以下のJSON形式のみで出力してください（他のテキストは不要）:
 {
-  "story_text": "物語本文",
+  "story_text": "500-800文字の伊坂風の物語本文。具体的比喩を2つ以上含む豊かな描写。",
   "summary_for_next": "次回への引き継ぎ要約（100文字以内）",
   "mood_tags": ["タグ1", "タグ2"],
   "character": "haru" または "sora",
-  "new_foreshadowing": null または "伏線モチーフの文字列",
-  "resolved_foreshadowing_id": null または "伏線のuuid"
+  "new_foreshadowing": null または "新しく仕込む伏線モチーフの文字列",
+  "resolved_foreshadowing_id": null または "今回回収した伏線のuuid"
 }`;
 }
 
 function parseStoryResponse(text: string): StoryResponse {
-    // Try to extract JSON from the response (handles both raw JSON and markdown-wrapped JSON)
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
         throw new Error('No JSON found in Gemini response');
     }
-
     const parsed = JSON.parse(jsonMatch[0]);
-
-    // Validate required fields
     if (!parsed.story_text || typeof parsed.story_text !== 'string') {
         throw new Error('Invalid story_text in response');
     }
-
     return {
         story_text: parsed.story_text,
         summary_for_next: parsed.summary_for_next || '',
@@ -145,14 +127,12 @@ serve(async (req) => {
             throw new Error('kizuki_id is required');
         }
 
-        // 1. Initialize Supabase Client (with user's auth context)
         const supabaseClient = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
             Deno.env.get('SUPABASE_ANON_KEY') ?? '',
             { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
         );
 
-        // 2. Fetch the submitted kizuki
         const { data: kizuki, error: kizukiError } = await supabaseClient
             .from('kizuki')
             .select('*')
@@ -165,7 +145,6 @@ serve(async (req) => {
 
         const userId = kizuki.user_id;
 
-        // 3. Fetch user profile
         const { data: profile, error: profileError } = await supabaseClient
             .from('profiles')
             .select('*')
@@ -176,7 +155,6 @@ serve(async (req) => {
             throw new Error(`Profile not found: ${profileError?.message}`);
         }
 
-        // 4. Fetch recent kizuki (last 3, excluding current)
         const { data: recentKizuki } = await supabaseClient
             .from('kizuki')
             .select('content')
@@ -185,7 +163,6 @@ serve(async (req) => {
             .order('created_at', { ascending: false })
             .limit(3);
 
-        // 5. Fetch previous story summary
         const { data: previousStory } = await supabaseClient
             .from('stories')
             .select('summary')
@@ -194,17 +171,14 @@ serve(async (req) => {
             .limit(1)
             .single();
 
-        // 6. Fetch active foreshadowing
         const { data: activeForeshadowing } = await supabaseClient
             .from('foreshadowing')
             .select('id, motif')
             .eq('user_id', userId)
             .eq('status', 'planted');
 
-        // 7. Inject Phase into SYSTEM_PROMPT
         const dynamicSystemPrompt = getSystemPrompt(profile.current_phase ?? 1);
 
-        // 8. Build prompt
         const userPrompt = buildUserPrompt(
             profile.current_phase ?? 1,
             profile.current_day ?? 1,
@@ -217,7 +191,6 @@ serve(async (req) => {
             })),
         );
 
-        // 8. Call Google Gemini 2.5 Flash API
         const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
         if (!geminiApiKey) {
             throw new Error('GEMINI_API_KEY is not configured');
@@ -278,10 +251,8 @@ serve(async (req) => {
             throw new Error('Empty response from Gemini');
         }
 
-        // 9. Parse Gemini's JSON response
         const storyData = parseStoryResponse(responseText);
 
-        // 10. Save story to database
         const { data: newStory, error: storyError } = await supabaseClient
             .from('stories')
             .insert({
@@ -300,7 +271,6 @@ serve(async (req) => {
             throw new Error(`Failed to save story: ${storyError.message}`);
         }
 
-        // 11. Handle foreshadowing
         if (storyData.new_foreshadowing) {
             await supabaseClient
                 .from('foreshadowing')
