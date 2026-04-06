@@ -16,23 +16,27 @@ class GasSupabaseEmulation {
 
         return {
             insert: async (data: any) => {
+                console.log('[GAS] Inserting story...', data[0]);
                 try {
                     const response = await fetch(this.url, {
                         method: 'POST',
                         body: JSON.stringify({
                             action: 'save_story',
                             auth_token: this.token,
-                            story: data[0] // Supabase style insert expects array
+                            story: data[0]
                         }),
                     });
                     const result = await response.json();
+                    console.log('[GAS] Insert Response:', result);
                     return { data: result, error: result.error ? result : null };
                 } catch (e) {
+                    console.error('[GAS] Insert Failed:', e);
                     return { data: null, error: e };
                 }
             },
             select: () => ({
                 order: async () => {
+                    console.log('[GAS] Fetching stories...');
                     try {
                         const response = await fetch(this.url, {
                             method: 'POST',
@@ -42,8 +46,10 @@ class GasSupabaseEmulation {
                             }),
                         });
                         const result = await response.json();
+                        console.log('[GAS] Select Response:', result);
                         return { data: result.stories, error: result.error ? result : null };
                     } catch (e) {
+                        console.error('[GAS] Select Failed:', e);
                         return { data: null, error: e };
                     }
                 }
