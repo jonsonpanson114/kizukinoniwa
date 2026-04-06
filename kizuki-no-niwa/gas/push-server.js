@@ -27,13 +27,82 @@ function doPost(e) {
   if (data.action === "subscribe") {
     return saveSubscription(data);
   }
+  
+  if (data.action === "save_story") {
+    return saveStory(data);
+  }
+  
+  if (data.action === "get_stories") {
+    return getStories(data);
+  }
 
   return ContentService.createTextOutput(JSON.stringify({ error: "Unknown action" }))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+/**
+ * 物語の保存
+ */
+function saveStory(data) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName("stories");
+  if (!sheet) {
+    sheet = ss.insertSheet("stories");
+    sheet.appendRow(["id", "content", "character", "created_at", "metadata"]);
+  }
+  
+  const story = data.story;
+  const rowData = [
+    story.id || Utilities.getUuid(),
+    story.content,
+    story.character || "sora",
+    new Date(),
+    JSON.stringify(story.metadata || {})
+  ];
+  
+  sheet.appendRow(rowData);
+  
+  return ContentService.createTextOutput(JSON.stringify({ ok: true }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * 物語の取得
+ */
+function getStories(data) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("stories");
+  if (!sheet) {
+    return ContentService.createTextOutput(JSON.stringify({ stories: [] }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  const rows = sheet.getDataRange().getValues();
+  const stories = [];
+  
+  // ヘッダーを除いて後ろから（最新順）
+  for (let i = rows.length - 1; i >= 1; i--) {
+    stories.push({
+      id: rows[i][0],
+      content: rows[i][1],
+      character: rows[i][2],
+      created_at: rows[i][3],
+      metadata: JSON.parse(rows[i][4] || "{}")
+    });
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify({ stories: stories }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
 function saveSubscription(data) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName("subscriptions");
+  if (!sheet) {
+    sheet = ss.insertSheet("subscriptions");
+    sheet.appendRow(["endpoint", "subscription", "character", "mH", "mM", "mE", "eH", "eM", "eE", "updated_at"]);
+  }
+  
   const subscription = data.subscription;
   const settings = data.settings || {};
   const character = data.character || "sora";
@@ -81,9 +150,11 @@ function checkAndSend() {
   const currentHour = now.getHours();
   const currentMinute = now.getMinutes();
   
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  const rows = sheet.getDataRange().getValues();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("subscriptions");
+  if (!sheet) return;
   
+  const rows = sheet.getDataRange().getValues();
   const subscriptionsToSend = [];
 
   for (let i = 1; i < rows.length; i++) {

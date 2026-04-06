@@ -1,34 +1,55 @@
 import 'react-native-url-polyfill/auto';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { Database } from '../types/supabase';
 import { Config } from './config';
 
-const ExpopSecureStoreAdapter = {
-    getItem: (_key: string) => Promise.resolve(null),
-    setItem: (_key: string, _value: string) => Promise.resolve(),
-    removeItem: (_key: string) => Promise.resolve(),
-};
+/**
+ * Anti-Gravity Data Layer (GAS Wrapper)
+ * Supabase が不明なため、Google Apps Script を DB として使用する影武者。
+ */
+class GasSupabaseEmulation {
+    private url = Config.GAS_URL;
+    private token = Config.GAS_AUTH_TOKEN;
 
-const supabaseUrl = Config.SUPABASE_URL;
-const supabaseAnonKey = Config.SUPABASE_ANON_KEY;
+    from(table: string) {
+        if (table !== 'stories') {
+            console.warn(`[GAS] Table "${table}" is not supported. Redirecting to stories.`);
+        }
 
-function createSafeClient(): SupabaseClient<Database> {
-    // Use a dummy but valid URL when Supabase is not configured
-    const url = supabaseUrl && !supabaseUrl.includes('your_')
-        ? supabaseUrl
-        : 'https://placeholder.supabase.co';
-    const key = supabaseAnonKey && !supabaseAnonKey.includes('your_')
-        ? supabaseAnonKey
-        : 'placeholder-key';
-
-    return createClient<Database>(url, key, {
-        auth: {
-            storage: ExpopSecureStoreAdapter,
-            autoRefreshToken: true,
-            persistSession: true,
-            detectSessionInUrl: false,
-        },
-    });
+        return {
+            insert: async (data: any) => {
+                try {
+                    const response = await fetch(this.url, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'save_story',
+                            auth_token: this.token,
+                            story: data[0] // Supabase style insert expects array
+                        }),
+                    });
+                    const result = await response.json();
+                    return { data: result, error: result.error ? result : null };
+                } catch (e) {
+                    return { data: null, error: e };
+                }
+            },
+            select: () => ({
+                order: async () => {
+                    try {
+                        const response = await fetch(this.url, {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                action: 'get_stories',
+                                auth_token: this.token
+                            }),
+                        });
+                        const result = await response.json();
+                        return { data: result.stories, error: result.error ? result : null };
+                    } catch (e) {
+                        return { data: null, error: e };
+                    }
+                }
+            })
+        };
+    }
 }
 
-export const supabase = createSafeClient();
+export const supabase = new GasSupabaseEmulation() as any;

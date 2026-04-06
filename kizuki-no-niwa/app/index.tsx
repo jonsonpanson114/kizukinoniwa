@@ -139,7 +139,7 @@ export default function HomeScreen() {
                                     if (result instanceof Error) {
                                         alert(`通知設定に失敗しました:\n${result.message}\n(ブラウザ設定や環境変数を確認してください)`);
                                     } else if (result) {
-                                        alert('通知設定をオンにしました！\n(Vercelデプロイ後に自動的に届きます)');
+                                        alert('通知設定をオンにしました！\n物語の続きを楽しみにしていてください。');
                                     } else {
                                         alert('通知設定がスキップされました。');
                                     }
